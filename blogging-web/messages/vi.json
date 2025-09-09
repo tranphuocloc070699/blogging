@@ -1,0 +1,30 @@
+{
+  "Meta": {
+    "title": "Chào mừng đến với Blog",
+    "description": "Chia sẻ kiến thức và câu chuyện"
+  },
+  "HomePage": {
+    "title": "Xin chào!",
+    "about": "Giới thiệu bản thân"
+  },
+  "Navbar": {
+    "learning": "Kiến thức",
+    "ebook": "eBook",
+    "news": "Tin tức",
+    "about": "Giới thiệu"
+  },
+  "NotificationDropdownContent": {
+    "title": "Thông báo",
+    "markAll": "Đánh dấu đã đọc",
+    "viewAll": "Xem tất cả"
+  },
+  "ProfileDropdownContent": {
+    "myProfile": "Thông tin",
+    "signOut": "Đăng xuất"
+  },
+  "TagSortSelect": {
+    "popular": "Phổ biến",
+    "newest": "Mới nhất",
+    "oldest": "Cũ nhất"
+  }
+}

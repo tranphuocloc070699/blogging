@@ -1,0 +1,30 @@
+{
+  "Meta": {
+    "title": "Welcome to the Blog",
+    "description": "Sharing knowledge and stories"
+  },
+  "HomePage": {
+    "title": "Hello world!",
+    "about": "Go to the about page"
+  },
+  "Navbar": {
+    "learning": "Learning",
+    "ebook": "eBook",
+    "news": "News",
+    "about": "About"
+  },
+  "NotificationDropdownContent": {
+    "title": "Notifications",
+    "markAll": "Mark all as read",
+    "viewAll": "View All"
+  },
+  "ProfileDropdownContent": {
+    "myProfile": "My Profile",
+    "signOut": "Sign Out"
+  },
+  "TagSortSelect": {
+    "popular": "Popular",
+    "newest": "Newest",
+    "oldest": "Oldest"
+  }
+}
