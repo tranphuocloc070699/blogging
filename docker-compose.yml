@@ -47,7 +47,6 @@ services:
       MINIO_ACCESS_KEY: admin
       MINIO_SECRET_KEY: password123
       MINIO_BUCKET: blogging
-      MINIO_USE_SSL: false
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_TOKEN_EXPIRE: ${JWT_ACCESS_TOKEN_EXPIRE:-3600}
