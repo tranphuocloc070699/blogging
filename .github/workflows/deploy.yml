@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/blogging
+            git pull origin main || git pull origin master
+
+            # Build and restart containers
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+
+            # Run Prisma migrations
+            docker-compose exec -T app npx prisma migrate deploy
+
+            # Create MinIO bucket if it doesn't exist
+            docker-compose exec -T minio mc alias set local http://localhost:9000 admin password123
+            docker-compose exec -T minio mc mb local/blogging --ignore-existing
+            docker-compose exec -T minio mc anonymous set download local/blogging
+
+            # Cleanup old images
+            docker image prune -f

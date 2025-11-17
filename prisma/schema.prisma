@@ -1,0 +1,139 @@
+model Book {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  author      String    @db.VarChar(200)
+  publishDate DateTime? @map("publish_date") @db.Date
+  review      String
+  quotes      Json?     @db.Json
+  thumbnail   String?   @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([name], map: "idx_books_name")
+  @@index([author], map: "idx_books_author")
+  @@index([publishDate], map: "idx_books_publish_date")
+  @@map("books")
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+model PostTerm {
+  postId    Int      @map("post_id")
+  termId    Int      @map("term_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_post_terms_post_id")
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_post_terms_term_id")
+
+  @@id([postId, termId], map: "pk_post_terms")
+  @@unique([postId, termId], map: "uk_post_terms_post_term")
+  @@index([postId], map: "idx_post_terms_post_id")
+  @@index([termId], map: "idx_post_terms_term_id")
+  @@map("post_terms")
+}
+model Post {
+  id              Int        @id @default(autoincrement())
+  title           String     @db.VarChar(200)
+  excerpt         String
+  content         String
+  slug            String     @unique @db.VarChar(255)
+  tableOfContents Json?      @map("table_of_contents") @db.Json
+  status          String     @db.VarChar(20)
+  publishedAt     DateTime?  @map("published_at") @db.Timestamp(6)
+  authorId        Int        @map("author_id")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamp(6)
+  thumbnail       String?    @db.VarChar(255)
+  keywords        String?    @db.VarChar(255)
+  postTerms       PostTerm[]
+  views           PostView[] 
+  likes           PostLike[]
+  author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posts_author")
+
+  @@index([authorId], map: "idx_posts_author_id")
+  @@index([publishedAt], map: "idx_posts_published_at")
+  @@index([slug], map: "idx_posts_slug")
+  @@index([status], map: "idx_posts_status")
+  @@index([status, publishedAt], map: "idx_posts_status_published_at")
+  @@map("posts")
+}
+
+model PostView {
+  id        Int      @id @default(autoincrement())
+  postId    Int      @map("post_id")
+  userId    Int      @map("user_id")
+  viewedAt  DateTime @default(now()) @map("viewed_at") @db.Timestamp(6)
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // One view record per user per post
+  @@index([postId])
+  @@index([userId])
+  @@map("post_views")
+}
+
+// New table for tracking likes
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int      @map("post_id")
+  userId    Int      @map("user_id")
+  likedAt   DateTime @default(now()) @map("liked_at") @db.Timestamp(6)
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // One like per user per post
+  @@index([postId])
+  @@index([userId])
+  @@map("post_likes")
+}
+model Taxonomy {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique(map: "uk_taxonomies_name") @db.VarChar(100)
+  slug        String   @unique(map: "uk_taxonomies_slug") @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  terms       Term[]
+
+  @@index([name], map: "idx_taxonomies_name")
+  @@index([slug], map: "idx_taxonomies_slug")
+  @@map("taxonomies")
+}model Term {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(100)
+  slug        String     @db.VarChar(100)
+  description String?    @db.VarChar(500)
+  taxonomyId  Int        @map("taxonomy_id")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamp(6)
+  taxonomy    Taxonomy   @relation(fields: [taxonomyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_terms_taxonomy_id")
+  postTerms   PostTerm[]
+
+  @@unique([name, taxonomyId], map: "uk_terms_name_taxonomy")
+  @@unique([slug, taxonomyId], map: "uk_terms_slug_taxonomy")
+  @@index([name], map: "idx_terms_name")
+  @@index([slug], map: "idx_terms_slug")
+  @@index([taxonomyId], map: "idx_terms_taxonomy_id")
+  @@map("terms")
+}model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  password  String   @db.VarChar(60)
+  email     String?  @unique @db.VarChar(100)
+  role      String?  @default("USER") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  posts     Post[]
+  views     PostView[]  
+  likes     PostLike[]
+
+  @@index([email], map: "idx_users_email")
+  @@index([username], map: "idx_users_username")
+  @@map("users")
+}

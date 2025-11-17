@@ -1,0 +1,30 @@
+model Post {
+  id              Int        @id @default(autoincrement())
+  title           String     @db.VarChar(200)
+  excerpt         String
+  content         String
+  slug            String     @unique @db.VarChar(255)
+  tableOfContents Json?      @map("table_of_contents") @db.Json
+  status          String     @db.VarChar(20)
+  publishedAt     DateTime?  @map("published_at") @db.Timestamp(6)
+  authorId        Int        @map("author_id")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamp(6)
+  thumbnail       String?    @db.VarChar(255)
+  keywords        String?    @db.VarChar(255)
+  postTerms       PostTerm[]
+  views           PostView[] 
+  likes           PostLike[]
+  author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posts_author")
+
+  @@index([authorId], map: "idx_posts_author_id")
+  @@index([publishedAt], map: "idx_posts_published_at")
+  @@index([slug], map: "idx_posts_slug")
+  @@index([status], map: "idx_posts_status")
+  @@index([status, publishedAt], map: "idx_posts_status_published_at")
+  @@map("posts")
+}
+
+
+// New table for tracking likes
+

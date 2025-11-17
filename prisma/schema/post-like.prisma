@@ -1,0 +1,14 @@
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int      @map("post_id")
+  userId    Int      @map("user_id")
+  likedAt   DateTime @default(now()) @map("liked_at") @db.Timestamp(6)
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // One like per user per post
+  @@index([postId])
+  @@index([userId])
+  @@map("post_likes")
+}
