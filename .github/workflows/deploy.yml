@@ -20,7 +20,27 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Send Discord notification - Starting deployment
+        if: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🚀 Deployment Started",
+                "description": "Deploying to VPS...",
+                "color": 3447003,
+                "fields": [
+                  {"name": "Branch", "value": "'"${{ github.ref_name }}"'", "inline": true},
+                  {"name": "Commit", "value": "'"${GITHUB_SHA:0:7}"'", "inline": true},
+                  {"name": "Author", "value": "'"${{ github.actor }}"'", "inline": true}
+                ],
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"'"
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: Deploy to VPS
+        id: deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -45,3 +65,43 @@ jobs:
 
             # Cleanup old images
             docker image prune -f
+
+      - name: Send Discord notification - Success
+        if: success() && secrets.DISCORD_WEBHOOK_URL
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "✅ Deployment Successful",
+                "description": "Application deployed successfully to VPS!",
+                "color": 3066993,
+                "fields": [
+                  {"name": "Branch", "value": "'"${{ github.ref_name }}"'", "inline": true},
+                  {"name": "Commit", "value": "'"${GITHUB_SHA:0:7}"'", "inline": true},
+                  {"name": "Author", "value": "'"${{ github.actor }}"'", "inline": true},
+                  {"name": "Duration", "value": "'"${{ job.duration }}"'", "inline": true}
+                ],
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"'"
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Send Discord notification - Failure
+        if: failure() && secrets.DISCORD_WEBHOOK_URL
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Deployment Failed",
+                "description": "Deployment to VPS failed! Please check the logs.",
+                "color": 15158332,
+                "fields": [
+                  {"name": "Branch", "value": "'"${{ github.ref_name }}"'", "inline": true},
+                  {"name": "Commit", "value": "'"${GITHUB_SHA:0:7}"'", "inline": true},
+                  {"name": "Author", "value": "'"${{ github.actor }}"'", "inline": true},
+                  {"name": "Workflow", "value": "[View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+                ],
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"'"
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
