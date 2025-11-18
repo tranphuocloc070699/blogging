@@ -10,7 +10,7 @@ interface PaginationProps {
   total: number;
 }
 
-export default function Pagination({ currentPage, hasMore, total }: PaginationProps) {
+export default function Pagination({ currentPage, hasMore }: PaginationProps) {
   const hasPrevious = currentPage > 1;
 
   return (

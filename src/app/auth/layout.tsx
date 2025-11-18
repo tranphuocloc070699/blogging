@@ -1,14 +1,12 @@
 "use client"
 
 import React from 'react';
-import {useLayout} from "@/hooks/use-layout";
-import {useIsMounted} from "@/hooks/use-is-mounted";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import HydrogenLayout from "@/layouts/hydrogen/layout"
-import {LayoutProps} from "@/config/props";
+import { LayoutProps } from "@/config/props";
 import AuthGuard from '@/components/auth/auth-guard';
 
-const Layout = ({children}: LayoutProps) => {
-  const {layout} = useLayout();
+const Layout = ({ children }: LayoutProps) => {
   const isMounted = useIsMounted();
 
   if (!isMounted) {

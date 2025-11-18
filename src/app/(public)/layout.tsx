@@ -1,12 +1,11 @@
 import { Metadata } from 'next';
-import PublicHeader from '@/components/blog/layout/PublicHeader';
 import QueryProvider from '@/components/provider/query-provider';
 import Header from '@/components/public/header';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Raynox',
-    default: 'Raynox - Tech Blog',
+    template: '%s | loffy',
+    default: 'loffy - Tech Blog',
   },
   description: 'A blog about web development, React, and modern JavaScript',
   keywords: ['blog', 'web development', 'React', 'JavaScript', 'Next.js'],
@@ -14,8 +13,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://raynox.com',
-    siteName: 'Raynox',
+    url: 'https://loffy.me',
+    siteName: 'loffy',
   },
   robots: {
     index: true,

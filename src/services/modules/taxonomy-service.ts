@@ -1,11 +1,10 @@
-import type { PaginatedApiResponse, ApiResponse, SearchParams } from "@/types/common";
-import HttpFactory from "../factory";
+import type { ApiResponse, PaginatedApiResponse, SearchParams } from "@/types/common";
 import {
-  TaxonomyDto,
   CreateTaxonomyDto,
+  TaxonomyDto,
   UpdateTaxonomyDto
 } from "@/types/posts";
-import { getClientOrServerUrl } from "@/lib/api-utils";
+import HttpFactory from "../factory";
 
 class TaxonomyService extends HttpFactory {
 

@@ -6,12 +6,13 @@ import { serializeBigInt } from '@/lib/api-utils';
 
 // GET /api/terms/:id - Get term by ID
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const term = await prisma.term.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         taxonomy: {
           select: {
@@ -44,18 +45,18 @@ export async function GET(
 // PUT /api/terms/:id - Update term (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
+
     const body = await request.json();
     const { name, slug, description, taxonomyId } = body;
 
     // Check if term exists
     const existing = await prisma.term.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existing) {
@@ -82,7 +83,7 @@ export async function PUT(
       const duplicate = await prisma.term.findFirst({
         where: {
           AND: [
-            { id: { not: parseInt(params.id) } },
+            { id: { not: parseInt(id) } },
             { taxonomyId: targetTaxonomyId },
             {
               OR: [
@@ -101,7 +102,7 @@ export async function PUT(
 
     // Update term
     const term = await prisma.term.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         ...(name && { name }),
         ...(termSlug && { slug: termSlug }),
@@ -128,6 +129,10 @@ export async function PUT(
       postCount: _count.postTerms,
     }, 'Term updated successfully');
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Update term error:', error);
 
     if (error.code === 'P2002') {
@@ -140,16 +145,15 @@ export async function PUT(
 
 // DELETE /api/terms/:id - Delete term (Admin only)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
     // Check if term exists
     const term = await prisma.term.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         _count: {
           select: { postTerms: true },
@@ -168,11 +172,15 @@ export async function DELETE(
 
     // Delete term
     await prisma.term.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return successResponse(null, 'Term deleted successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Delete term error:', error);
     return errorResponse('Failed to delete term', 500);
   }

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import PostTaxonomies from './post-taxonomies';
 import { Input } from '@/components/ui/input';
+import { useMemo, useState } from 'react';
+import PostTaxonomies from './post-taxonomies';
 // import { Select, SelectOption } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown } from 'lucide-react';
 import { generateTOC } from "@/lib/post-util";
 import { useTaxonomyStore } from "@/store/taxonomy.store";
 import { useTermStore } from "@/store/term.store";
+import { ChevronDown } from 'lucide-react';
 
 interface PostFormData {
   title: string;
@@ -21,26 +21,7 @@ interface PostFormData {
   status: 'DRAFT' | 'PUBLISHED';
 }
 
-interface Term {
-  id: number;
-  name: string;
-  taxonomy: {
-    id: number;
-    name: string;
-  };
-}
 
-interface Taxonomy {
-  id: number;
-  name: string;
-}
-
-interface TocItem {
-  title: string;
-  anchor: string;
-  level: number;
-  children?: TocItem[];
-}
 
 interface PostMetadataFormProps {
   status: string;
@@ -57,7 +38,7 @@ interface PostMetadataFormProps {
 // ];
 
 export default function PostMetadataForm({
-  status, slug, termIds, keywords,
+  slug, termIds, keywords,
   onFormDataChange,
   content,
 }: PostMetadataFormProps) {

@@ -6,3 +6,16 @@ export enum LAYOUT_OPTIONS {
   BORON = 'boron',
   CARBON = 'carbon',
 }
+
+export enum TOKEN_TYPE {
+  ACCESS ="accessToken",
+  REFRESH="refreshToken"
+}
+
+export const USER_ROLE = {
+  ADMIN:"ADMIN",
+  USER:"USER"
+}
+
+
+

@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import BlogDashboard from '@/components/blog/BlogDashboard';
 import BlogPostList from '@/components/public/blog-posts/blog-post-list';
 import BlogPostFilterBar from '@/components/public/blog-posts/blog-post-filter-bar';
 import PostService from '@/services/modules/post-service';

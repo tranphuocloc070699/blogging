@@ -1,11 +1,11 @@
 'use client';
 
+import FormGroup from '@/components/form/form-group';
+import { Input } from '@/components/ui';
+import { cn } from '@/lib/utils';
+import { Image as ImageIcon, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Button, Input } from '@/components/ui';
-import { cn } from '@/lib/utils';
-import FormGroup from '@/components/form/form-group';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface PostMediaProps {
   className?: string;
@@ -16,7 +16,7 @@ export default function PostMedia({ className }: PostMediaProps) {
     control,
     setValue,
     watch,
-    formState: { errors },
+    // formState: { errors },
   } = useFormContext();
 
   const [dragActive, setDragActive] = useState(false);

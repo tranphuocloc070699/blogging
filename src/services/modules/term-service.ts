@@ -1,11 +1,10 @@
-import type { PaginatedApiResponse, ApiResponse, SearchParams } from "@/types/common";
-import HttpFactory from "../factory";
+import type { ApiResponse, PaginatedApiResponse, SearchParams } from "@/types/common";
 import {
-  TermDto,
   CreateTermDto,
+  TermDto,
   UpdateTermDto
 } from "@/types/posts";
-import { getClientOrServerUrl } from "@/lib/api-utils";
+import HttpFactory from "../factory";
 
 class TermService extends HttpFactory {
   readonly PREFIX: string = "/api/terms";

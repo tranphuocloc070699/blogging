@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@admin.com'
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
-  const adminUsername = process.env.ADMIN_USERNAME || 'admin'
+  const adminEmail = process.env["ADMIN_EMAIL"] || 'admin@admin.com'
+  const adminPassword = process.env["ADMIN_PASSWORD"] || 'admin'
+  const adminUsername = process.env["ADMIN_USERNAME"] || 'admin'
 
   const hashedPassword = await bcrypt.hash(adminPassword, 10)
 

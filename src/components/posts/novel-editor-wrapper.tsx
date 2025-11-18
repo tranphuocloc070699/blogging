@@ -90,7 +90,7 @@ export default function NovelEditorWrapper({ value, onChange, className }: Novel
       <EditorRoot key={editorKey}>
         <EditorContent
           initialContent={initialContent}
-          extensions={[...defaultExtensions, slashCommand]}
+          extensions={[...defaultExtensions, slashCommand] as any}
           className={cn("min-h-full w-full editor-wrapper", className)}
           editorProps={{
             attributes: {

@@ -1,10 +1,10 @@
-import React, { use, useMemo } from 'react'
-import { Button } from '../ui'
-import { User } from 'lucide-react'
-import { useUserStore } from '@/store/user.store';
 import { getInitials } from '@/lib/string-util';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/store/user.store';
+import { User } from 'lucide-react';
 import Link from 'next/link';
+import { useMemo } from 'react';
+import { Button } from '../ui';
 
 
 

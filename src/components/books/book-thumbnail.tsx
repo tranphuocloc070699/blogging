@@ -143,8 +143,8 @@ export default function BookThumbnail({ className }: BookThumbnailProps) {
             </div>
           </div>
         )}
-        {errors.thumbnail?.message && (
-          <p className="mt-2 text-sm text-red-600">{errors.thumbnail.message as string}</p>
+        {errors["thumbnail"]?.message && (
+          <p className="mt-2 text-sm text-red-600">{errors["thumbnail"].message as string}</p>
         )}
       </div>
     </FormGroup>

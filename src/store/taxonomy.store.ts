@@ -1,7 +1,6 @@
-import {create} from "zustand";
-import {Taxonomy} from "@prisma/client";
-import {TaxonomyDto} from "@/types/posts";
-import {TaxonomyService, TermService} from "@/services";
+import { TaxonomyService } from "@/services";
+import { TaxonomyDto } from "@/types/posts";
+import { create } from "zustand";
 
 interface TaxonomyProps {
   isLoading: boolean;

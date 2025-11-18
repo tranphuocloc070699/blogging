@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 // import { Select } from '@/components/ui/select';
-import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
 	Select,
 	SelectContent,
@@ -14,9 +12,10 @@ import {
 	SelectLabel,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { useTermStore } from '@/store/term.store';
 import { TermDto } from '@/types/posts';
+import { Search } from 'lucide-react';
 
 
 const BlogPostFilterBar = () => {

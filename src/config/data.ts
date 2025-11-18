@@ -1,6 +1,5 @@
-import {routes} from "@/config/routes";
-import {Book, Heart, Mail, Newspaper} from "lucide-react";
-import {JSX} from "react";
+import { routes } from "@/config/routes";
+import { Heart, Mail } from "lucide-react";
 
 
 export const pageLinks = [

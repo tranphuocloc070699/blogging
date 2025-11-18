@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginatedResponse } from "@/types/common";
+import type { ApiResponse, PaginatedApiResponse } from "@/types/common";
 import HttpFactory from "../factory";
 import { BookDto, CreateBookDto, UpdateBookDto } from "@/types/books";
 
@@ -32,7 +32,7 @@ class BookService extends HttpFactory {
       });
     }
 
-    return this.call<PaginatedResponse<BookDto>>({
+    return this.call<PaginatedApiResponse<BookDto>>({
       method: "GET",
       url: `${this.PREFIX}?${searchParams.toString()}`,
     });

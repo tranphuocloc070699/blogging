@@ -1,6 +1,5 @@
 import { PostDashboardDto } from '@/types/posts'
-import React from 'react'
-import { Eye, Heart, Check } from 'lucide-react'
+import { Check, Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 

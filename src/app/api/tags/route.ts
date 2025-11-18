@@ -1,9 +1,9 @@
-import { NextRequest } from 'next/server';
+
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/response';
 
 // GET /api/tags - Get all tags from Tag taxonomy
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get the Tag taxonomy
     const tagTaxonomy = await prisma.taxonomy.findFirst({

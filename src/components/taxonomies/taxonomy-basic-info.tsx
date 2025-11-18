@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
-import { useFormContext } from "react-hook-form";
-import { cn } from "@/lib/utils";
 import FormGroup from "@/components/form/form-group";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import React from "react";
+import { useFormContext } from "react-hook-form";
 
 interface TaxonomyBasicInfoProps {
   className?: string;
@@ -15,7 +15,6 @@ interface TaxonomyBasicInfoProps {
 
 export default function TaxonomyBasicInfo({
   className,
-  mode,
   onNameChange
 }: TaxonomyBasicInfoProps) {
   const {
@@ -38,7 +37,7 @@ export default function TaxonomyBasicInfo({
             register('name').onChange(e);
             if (onNameChange) onNameChange(e);
           }}
-          error={errors.name?.message as string}
+          error={errors["name"]?.message as string}
           required
         />
       </div>
@@ -48,7 +47,7 @@ export default function TaxonomyBasicInfo({
           label="Slug"
           placeholder="taxonomy-slug"
           {...register('slug')}
-          error={errors.slug?.message as string}
+          error={errors["slug"]?.message as string}
         />
         <p className="mt-1 text-xs text-gray-500">
           URL-friendly version of the name. Leave empty to auto-generate.
@@ -60,7 +59,7 @@ export default function TaxonomyBasicInfo({
           label="Description"
           placeholder="Enter taxonomy description (optional)"
           {...register('description')}
-          error={errors.description?.message as string}
+          error={errors["description"]?.message as string}
           rows={4}
         />
       </div>

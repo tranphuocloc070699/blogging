@@ -1,20 +1,14 @@
 "use client"
 
-import React, {useEffect} from 'react';
 import {
   Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+  SheetContent
+} from "@/components/ui/sheet";
+import React, { useEffect } from 'react';
 
-import {usePathname} from "next/navigation";
-import {useSheet} from "@/components/sheet-views/use-sheet";
-import {cn} from "@/lib/utils";
 import SheetHeader from "@/components/sheet-views/sheet-header";
+import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 
 
@@ -28,7 +22,7 @@ interface CustomSheetProps {
   contentClassName?: string;
 }
 
-const CustomSheet = ({title,isOpen,setIsOpen,children,contentClassName,placement = "right"} : CustomSheetProps) => {
+const CustomSheet = ({ title, isOpen, setIsOpen, children, contentClassName, placement = "right" }: CustomSheetProps) => {
   const pathname = usePathname();
   // const {view, title, isOpen, placement, contentClassName, closeSheet} = useSheet()
 
@@ -39,17 +33,17 @@ const CustomSheet = ({title,isOpen,setIsOpen,children,contentClassName,placement
     closeSheet();
   }, [pathname]);
 
-  function closeSheet(){
+  function closeSheet() {
     setIsOpen(false);
   }
 
   return (
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent side={placement} className={cn(contentClassName)}>
-          <SheetHeader title={title} onSheetClose={closeSheet}/>
-          {children}
-        </SheetContent>
-      </Sheet>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent side={placement} className={cn(contentClassName)}>
+        <SheetHeader title={title} onSheetClose={closeSheet} />
+        {children}
+      </SheetContent>
+    </Sheet>
   );
 };
 

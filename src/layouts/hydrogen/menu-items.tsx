@@ -1,5 +1,5 @@
-import {JSX} from "react";
-import {Book, Newspaper, Tags, FolderTree, Users} from "lucide-react";
+import { FolderTree, Newspaper, Tags, Users } from "lucide-react";
+import { JSX } from "react";
 
 type MenuItem = {
   name: string;
@@ -19,16 +19,16 @@ export const menuItems: MenuItem[] = [
   {
     name: 'Posts',
     href: '/auth/posts',
-    icon: <Newspaper/>,
+    icon: <Newspaper />,
     dropdownItems: [
       {
         name: "Dashboard",
         href: "/auth/posts",
       }
-      ,{
-      name: "Create Post Old",
-      href: "/auth/posts/upsave-old",
-    },{
+      , {
+        name: "Create Post Old",
+        href: "/auth/posts/upsave-old",
+      }, {
         name: "Create Post",
         href: "/auth/posts/upsave",
       }]
@@ -36,35 +36,35 @@ export const menuItems: MenuItem[] = [
   {
     name: 'Taxonomies',
     href: '/auth/taxonomies',
-    icon: <FolderTree/>,
+    icon: <FolderTree />,
     dropdownItems: [
       {
         name: "Dashboard",
         href: "/auth/taxonomies",
       }
-        ,{
-      name: "Create Taxonomy",
-      href: "/auth/taxonomies/create",
-    }]
+      , {
+        name: "Create Taxonomy",
+        href: "/auth/taxonomies/create",
+      }]
   },
   {
     name: 'Terms',
     href: '/auth/terms',
-    icon: <Tags/>,
+    icon: <Tags />,
     dropdownItems: [
       {
         name: "Dashboard",
         href: "/auth/terms",
       },
-        {
-      name: "Create Term",
-      href: "/auth/terms/create",
-    }]
+      {
+        name: "Create Term",
+        href: "/auth/terms/create",
+      }]
   },
   {
     name: 'Users',
     href: '/auth/users',
-    icon: <Users/>,
+    icon: <Users />,
     dropdownItems: [
       {
         name: "Dashboard",

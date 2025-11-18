@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui";
-import PostMetadataForm from "@/components/posts/create-edit/post-metadata-form";
-import { Eye, FileText, Save } from "lucide-react";
-import { useSheet } from '@/components/sheet-views/use-sheet';
 import { PostFormData } from "@/app/auth/posts/upsave/page";
-import { useTaxonomyStore } from "@/store/taxonomy.store";
-import { useTermStore } from "@/store/term.store";
+import PostMetadataForm from "@/components/posts/create-edit/post-metadata-form";
 import CustomSheet from "@/components/sheet-views/container";
+import { Button } from "@/components/ui";
+import { Eye, FileText, Save } from "lucide-react";
+import { useState } from 'react';
 
 
 

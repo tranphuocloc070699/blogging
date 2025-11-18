@@ -25,13 +25,19 @@ export interface PostWithTaxonomies extends Omit<Post, 'postTerms'> {
   };
 }
 
+
+/**
+ * Type for taxonomy summary (only fields we actually need)
+ */
+export type TaxonomySummary = Pick<Taxonomy, 'id' | 'name' | 'slug'>;
+
 /**
  * Type for raw Prisma query result with nested includes
  */
 export type PostWithRelations = Post & {
   postTerms: (PostTerm & {
     term: Term & {
-      taxonomy: Taxonomy;
+      taxonomy: TaxonomySummary;
     };
   })[];
   author?: {
@@ -137,19 +143,4 @@ export function transformPostsWithTaxonomies(
   posts: PostWithRelations[]
 ): PostWithTaxonomies[] {
   return posts.map(transformPostWithTaxonomies);
-}
-
-/**
- * Returns the post data (already using Int, no conversion needed)
- * This function exists for API consistency
- */
-export function serializePost(post: PostWithTaxonomies): any {
-  return post;
-}
-
-/**
- * Serializes array of posts
- */
-export function serializePosts(posts: PostWithTaxonomies[]): any[] {
-  return posts;
 }

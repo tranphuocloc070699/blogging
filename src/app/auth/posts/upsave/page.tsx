@@ -1,44 +1,23 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Calendar, Tag, Upload, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { useUserStore } from '@/store/user.store';
 import NovelEditorWrapper from '@/components/posts/novel-editor-wrapper';
-import { PostService, TaxonomyService, TermService } from '@/services';
+import BottomActionBar from "@/components/posts/upsave/bottom-action-bar";
+import PostUpsaveExcerpt from '@/components/posts/upsave/post-upsave-excerpt';
+import PostUpsaveTitle from '@/components/posts/upsave/post-upsave-title';
 import { routes } from '@/config/routes';
 import MinimalLayout from '@/layouts/minimal-layout';
-import { useTaxonomyStore } from '@/store/taxonomy.store';
+import { cn } from '@/lib/utils';
+import { PostService } from '@/services';
 import { useTermStore } from '@/store/term.store';
-import { useSheet } from '@/components/sheet-views/use-sheet';
-import BottomActionBar from "@/components/posts/upsave/bottom-action-bar";
-import { TermDto } from "@/types/posts";
-import PostUpsaveTitle from '@/components/posts/upsave/post-upsave-title';
-import PostUpsaveExcerpt from '@/components/posts/upsave/post-upsave-excerpt';
+import { useUserStore } from '@/store/user.store';
+import { ArrowLeft, Calendar, Tag, Upload, X } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // Types
-interface Taxonomy {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  terms?: Term[];
-}
 
-interface Term {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  taxonomyId: number;
-  taxonomy?: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-}
+
 
 export interface PostFormData {
   title: string;
@@ -60,7 +39,7 @@ export default function UpsavePage() {
 
   const [thumbnail, setThumbnail] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  // const [isSaving, setIsSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   // Services
@@ -83,7 +62,7 @@ export default function UpsavePage() {
 
 
   // Track if user has manually edited slug
-  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  // const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
 
 
 
@@ -114,7 +93,7 @@ export default function UpsavePage() {
           keywords: post.keywords
         });
 
-        setIsSlugManuallyEdited(true);
+        // setIsSlugManuallyEdited(true);
       } catch (error: any) {
         console.error('Failed to load post:', error);
         toast.error(error?.message || 'Failed to load post');
@@ -246,6 +225,7 @@ export default function UpsavePage() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
+      if (!file) return;
       handleThumbnailUpload(file);
     }
   };
@@ -272,7 +252,7 @@ export default function UpsavePage() {
       return;
     }
 
-    setIsSaving(true);
+    // setIsSaving(true);
     try {
       let finalExcerpt = formData.excerpt;
       if (!finalExcerpt) {
@@ -311,7 +291,7 @@ export default function UpsavePage() {
       console.error('Save post error:', error);
       toast.error(error?.message || 'Failed to save post');
     } finally {
-      setIsSaving(false);
+      // setIsSaving(false);
     }
   };
 

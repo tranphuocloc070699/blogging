@@ -34,7 +34,7 @@ export default function EditUserPage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const id = parseInt(params.id as string);
+        const id = parseInt(params["id"] as string);
         const { body } = await userService.getUserById(id);
         setUser(body.data);
       } catch (error) {
@@ -44,10 +44,10 @@ export default function EditUserPage() {
       }
     };
 
-    if (params.id) {
+    if (params["id"]) {
       loadUser();
     }
-  }, [params.id]);
+  }, [params["id"]]);
 
   if (loading) {
     return (

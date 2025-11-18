@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
-import { useFormContext, Controller } from "react-hook-form";
-import { cn } from "@/lib/utils";
 import FormGroup from "@/components/form/form-group";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { TaxonomyDto } from "@/types/posts";
+import React from "react";
+import { Controller, useFormContext } from "react-hook-form";
 
 interface TermBasicInfoProps {
   className?: string;
@@ -19,7 +19,6 @@ interface TermBasicInfoProps {
 
 export default function TermBasicInfo({
   className,
-  mode,
   taxonomies,
   taxonomiesLoading,
   onNameChange,
@@ -27,8 +26,6 @@ export default function TermBasicInfo({
   const {
     register,
     control,
-    watch,
-    setValue,
     formState: { errors },
   } = useFormContext();
 
@@ -52,7 +49,7 @@ export default function TermBasicInfo({
             register("name").onChange(e);
             if (onNameChange) onNameChange(e);
           }}
-          error={errors.name?.message as string}
+          error={errors["name"]?.message as string}
           required
         />
       </div>
@@ -62,7 +59,7 @@ export default function TermBasicInfo({
           label="Slug"
           placeholder="term-slug"
           {...register("slug")}
-          error={errors.slug?.message as string}
+          error={errors["slug"]?.message as string}
         />
         <p className="mt-1 text-xs text-gray-500">
           URL-friendly version of the name. Leave empty to auto-generate.
@@ -80,18 +77,26 @@ export default function TermBasicInfo({
             name="taxonomyId"
             control={control}
             render={({ field: { onChange, value } }) => (
-              <Select
-                placeholder="Select a taxonomy"
-                options={taxonomyOptions}
-                value={value?.toString() || ""}
-                onValueChange={(val) => onChange(parseInt(val))}
-              />
+
+              <Select onValueChange={onChange} value={value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Status</SelectLabel>
+                    {
+                      taxonomyOptions.map(taxonomyOption => <SelectItem key={taxonomyOption.value} value={taxonomyOption.value}>{taxonomyOption.label}</SelectItem>)
+                    }
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             )}
           />
         )}
-        {errors.taxonomyId && (
+        {errors["taxonomyId"] && (
           <p className="mt-1 text-sm text-red-600">
-            {errors.taxonomyId.message as string}
+            {errors["taxonomyId"].message as string}
           </p>
         )}
       </div>
@@ -101,7 +106,7 @@ export default function TermBasicInfo({
           label="Description"
           placeholder="Enter term description (optional)"
           {...register("description")}
-          error={errors.description?.message as string}
+          error={errors["description"]?.message as string}
           rows={4}
         />
       </div>

@@ -1,16 +1,16 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import {cn} from "@/lib/utils";
-import {useTheme} from "next-themes";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from 'react';
 
 interface LogoProps {
   iconOnly?: boolean;
   className?: string;
 }
 
-const Logo = ({iconOnly = false, className}: LogoProps) => {
-  const {theme} = useTheme();
+const Logo = ({ className }: LogoProps) => {
+  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,8 +23,8 @@ const Logo = ({iconOnly = false, className}: LogoProps) => {
   }
 
   return (
-      <img className={cn(className)} alt={"Logo"}
-           src={theme === "dark" ? "/light-logo.svg" : "/logo.svg"}/>
+    <img className={cn(className)} alt={"Logo"}
+      src={theme === "dark" ? "/light-logo.svg" : "/logo.svg"} />
   );
 };
 

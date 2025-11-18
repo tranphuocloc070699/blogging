@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
-import { transformPostWithTaxonomies, serializePost } from '@/lib/transformers/post-transformer';
+import { transformPostWithTaxonomies } from '@/lib/transformers/post-transformer';
 
 export interface RouteParams {
   params: Promise<{ id: string }>;
@@ -73,11 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Transform post to group terms by taxonomy
     const transformedPost = transformPostWithTaxonomies(post);
-
-    // Serialize for JSON response
-    const postResponse = serializePost(transformedPost);
-
-    return successResponse(postResponse);
+    return successResponse(transformedPost);
   } catch (error) {
     console.error('Get post error:', error);
     return errorResponse('Failed to fetch post', 500);
@@ -86,10 +82,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT /api/posts/[id] - Update post (Admin only)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+
     const { id } = await params;
     const postId = parseInt(id);
     const body = await request.json();
@@ -192,23 +187,22 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Transform post to group terms by taxonomy
     const transformedPost = transformPostWithTaxonomies(post);
-
-    // Serialize for JSON response
-    const postResponse = serializePost(transformedPost);
-
-    return successResponse(postResponse, 'Post updated successfully');
+    return successResponse(transformedPost, 'Post updated successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Update post error:', error);
     return errorResponse('Failed to update post', 500);
   }
 }
 
 // DELETE /api/posts/[id] - Delete post (Admin only)
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
+export async function DELETE( { params }: RouteParams) {
   try {
+    await requireAdmin();
+
     const { id } = await params;
     const postId = parseInt(id);
 
@@ -228,6 +222,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return successResponse(null, 'Post deleted successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Delete post error:', error);
     return errorResponse('Failed to delete post', 500);
   }

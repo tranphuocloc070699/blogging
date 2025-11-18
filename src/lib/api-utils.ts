@@ -2,7 +2,7 @@ export const getClientOrServerUrl = (): string => {
   if (typeof window !== "undefined") {
     return "/api";
   }
-  return process.env.BACKEND_DOMAIN || "http://localhost:3000/api";
+  return process.env["BACKEND_DOMAIN"] || "http://localhost:3000/api";
 };
 
 /**

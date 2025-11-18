@@ -13,22 +13,22 @@ export const calculateReadingTime = (content: string): number => {
   return Math.ceil(words / wordsPerMinute);
 };
 
-export const generateTableOfContents = (content: string) => {
-  const headingRegex = /^(#{1,6})\s+(.+)$/gm;
-  const toc = [];
-  let match;
+// export const generateTableOfContents = (content: string) => {
+//   const headingRegex = /^(#{1,6})\s+(.+)$/gm;
+//   const toc = [];
+//   let match;
 
-  while ((match = headingRegex.exec(content)) !== null) {
-    const level = match[1].length;
-    const text = match[2].trim();
-    const id = generateSlug(text);
+//   while ((match = headingRegex.exec(content)) !== null) {
+//     const level = match[1].length;
+//     const text = match[2].trim();
+//     const id = generateSlug(text);
 
-    toc.push({
-      level,
-      text,
-      id,
-    });
-  }
+//     toc.push({
+//       level,
+//       text,
+//       id,
+//     });
+//   }
 
-  return toc;
-};
+//   return toc;
+// };

@@ -10,7 +10,7 @@ interface BlogPostListProps {
 	total?: number;
 }
 
-const BlogPostList = ({ posts, hasMore = false, currentPage = 1, total = 0 }: BlogPostListProps) => {
+const BlogPostList = ({ posts, hasMore = false, currentPage = 1 }: BlogPostListProps) => {
 	return (
 		<div className="flex flex-col">
 			{posts.map((post) => (

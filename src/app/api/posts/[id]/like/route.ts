@@ -1,15 +1,14 @@
 import { getAuthUser, requireAuth } from "@/lib/middleware";
-import { NextRequest } from "next/server";
 import { RouteParams } from "../route";
 import prisma from "@/lib/prisma";
 import { errorResponse, forbiddenResponse, notFoundResponse, successResponse } from "@/lib/response";
+import { NextRequest } from "next/server";
 
 // PUT /api/posts/[id]/like - Toggle like post
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-        const authResult = requireAuth(request);
-        if (authResult instanceof Response) return authResult;
-
+export async function PUT(_ : NextRequest, { params }: RouteParams) {
         try {
+                await requireAuth();
+
                 const { id } = await params;
                 const postId = parseInt(id);
                 const authUser = await getAuthUser();
@@ -75,6 +74,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
                         isLiked ? 'Post liked successfully' : 'Post unliked successfully'
                 );
         } catch (error) {
+                // If it's already a Response (from middleware), return it
+                if (error instanceof Response) {
+                        return error;
+                }
                 console.error('Toggle like error:', error);
                 return errorResponse('Failed to toggle like', 500);
         }

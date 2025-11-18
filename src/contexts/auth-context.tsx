@@ -1,15 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useUserStore } from "@/store/user.store";
+import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { setGlobalAuth } from "@/lib/api";
-import type { User } from "@/types/users";
-import { TaxonomyService, TermService, UserService } from "@/services";
-import { useTermStore } from "@/store/term.store";
+import { UserService } from "@/services";
 import { useTaxonomyStore } from "@/store/taxonomy.store";
+import { useTermStore } from "@/store/term.store";
+import type { User } from "@/types/users";
 
 interface AuthContextType {
   user: User | null;

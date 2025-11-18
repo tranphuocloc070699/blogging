@@ -6,12 +6,13 @@ import { serializeBigInt } from '@/lib/api-utils';
 
 // GET /api/taxonomies/:id - Get taxonomy by ID
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const taxonomy = await prisma.taxonomy.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         _count: {
           select: { terms: true },
@@ -37,18 +38,17 @@ export async function GET(
 // PUT /api/taxonomies/:id - Update taxonomy (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
     const body = await request.json();
     const { name, slug, description } = body;
 
     // Check if taxonomy exists
     const existing = await prisma.taxonomy.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existing) {
@@ -63,7 +63,7 @@ export async function PUT(
       const duplicate = await prisma.taxonomy.findFirst({
         where: {
           AND: [
-            { id: { not: parseInt(params.id) } },
+            { id: { not: parseInt(id) } },
             {
               OR: [
                 ...(name ? [{ name: { equals: name, mode: 'insensitive' as const } }] : []),
@@ -81,7 +81,7 @@ export async function PUT(
 
     // Update taxonomy
     const taxonomy = await prisma.taxonomy.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         ...(name && { name }),
         ...(taxonomySlug && { slug: taxonomySlug }),
@@ -100,6 +100,10 @@ export async function PUT(
       termCount: _count.terms,
     }, 'Taxonomy updated successfully');
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Update taxonomy error:', error);
 
     if (error.code === 'P2002') {
@@ -112,16 +116,15 @@ export async function PUT(
 
 // DELETE /api/taxonomies/:id - Delete taxonomy (Admin only)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
     // Check if taxonomy exists
     const taxonomy = await prisma.taxonomy.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         _count: {
           select: { terms: true },
@@ -140,11 +143,15 @@ export async function DELETE(
 
     // Delete taxonomy
     await prisma.taxonomy.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return successResponse(null, 'Taxonomy deleted successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Delete taxonomy error:', error);
     return errorResponse('Failed to delete taxonomy', 500);
   }

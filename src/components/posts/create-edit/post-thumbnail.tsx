@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import FormGroup from '@/components/form/form-group';
 import { Upload, X } from 'lucide-react';
@@ -13,7 +13,6 @@ interface PostThumbnailProps {
 
 export default function PostThumbnail({ className }: PostThumbnailProps) {
   const {
-    control,
     watch,
     setValue,
     formState: { errors },
@@ -144,8 +143,8 @@ export default function PostThumbnail({ className }: PostThumbnailProps) {
             </div>
           </div>
         )}
-        {errors.thumbnail?.message && (
-          <p className="mt-2 text-sm text-red-600">{errors.thumbnail.message as string}</p>
+        {errors["thumbnail"]?.message && (
+          <p className="mt-2 text-sm text-red-600">{errors["thumbnail"].message as string}</p>
         )}
       </div>
     </FormGroup>

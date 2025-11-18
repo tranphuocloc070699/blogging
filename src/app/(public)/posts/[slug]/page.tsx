@@ -18,7 +18,8 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const postService = new PostService();
-    const { slug } = await params
+    const { slug } = await params;
+    console.log({ slug })
     const res = await postService.getPostBySlug(slug);
 
     const post = res.body.data as PostDto;

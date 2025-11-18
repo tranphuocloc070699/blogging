@@ -26,7 +26,6 @@ interface PostTaxonomiesProps {
 }
 
 export default function PostTaxonomies({
-  className,
   termIds,
   onTermIdsChange,
   terms,

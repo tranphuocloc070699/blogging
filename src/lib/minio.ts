@@ -2,15 +2,15 @@ import * as Minio from 'minio';
 
 // MinIO client configuration
 export const minioClient = new Minio.Client({
-  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-  port: parseInt(process.env.MINIO_PORT || '9000'),
-  useSSL: process.env.MINIO_USE_SSL === 'true',
-  accessKey: process.env.MINIO_ACCESS_KEY || 'admin',
-  secretKey: process.env.MINIO_SECRET_KEY || 'password123',
+  endPoint: process.env["MINIO_ENDPOINT"] || 'localhost',
+  port: parseInt(process.env["MINIO_PORT"] || '9000'),
+  useSSL: process.env["MINIO_USE_SSL"] === 'true',
+  accessKey: process.env["MINIO_ACCESS_KEY"] || 'admin',
+  secretKey: process.env["MINIO_SECRET_KEY"] || 'password123',
 });
 
 // Bucket name for blog images
-export const MINIO_BUCKET = process.env.MINIO_BUCKET || 'blogging';
+export const MINIO_BUCKET = process.env["MINIO_BUCKET"] || 'blogging';
 
 // Ensure bucket exists
 export async function ensureBucketExists() {
@@ -68,7 +68,7 @@ export async function uploadToMinio(
     );
 
     // Return public URL
-    const url = `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${MINIO_BUCKET}/${uniqueFileName}`;
+    const url = `${process.env["MINIO_PUBLIC_URL"] || 'http://localhost:9000'}/${MINIO_BUCKET}/${uniqueFileName}`;
     return url;
   } catch (error) {
     console.error('Error uploading to MinIO:', error);

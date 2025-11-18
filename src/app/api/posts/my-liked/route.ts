@@ -1,4 +1,4 @@
-import { getAuthUser, requireAuth } from "@/lib/middleware";
+import { getAuthUser } from "@/lib/middleware";
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { errorResponse, successResponse } from "@/lib/response";

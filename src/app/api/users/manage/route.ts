@@ -8,10 +8,9 @@ import { Prisma } from '@prisma/client';
 
 // GET /api/users/manage - Get all users (Admin only)
 export async function GET(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get('page') || '0');
@@ -76,6 +75,10 @@ export async function GET(request: NextRequest) {
       'Users retrieved successfully'
     );
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Get users error:', error);
     return errorResponse('Failed to fetch users', 500);
   }
@@ -83,10 +86,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/users/manage - Create a new user (Admin only)
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+
     const body = await request.json();
     const { username, email, password, role } = body;
 
@@ -103,8 +105,8 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.user.findFirst({
       where: {
         OR: [
-          { username: { equals: username, mode: 'insensitive' } },
-          ...(email ? [{ email: { equals: email, mode: 'insensitive' } }] : []),
+          { username: { equals: username, mode: 'insensitive' as const} },
+          ...(email ? [{ email: { equals: email, mode: 'insensitive' as const} }] : []),
         ],
       },
     });
@@ -140,6 +142,10 @@ export async function POST(request: NextRequest) {
       201
     );
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Create user error:', error);
 
     // Handle Prisma unique constraint errors

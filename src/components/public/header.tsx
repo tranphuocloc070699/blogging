@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { ContactRound, Newspaper } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Logo from '../shared/logo';
+import MobileMenu from './mobile-menu';
 import NavbarItem from './navbar-item';
 import UserProfile from './user-profile';
-import MobileMenu from './mobile-menu';
-import { Newspaper, BookOpenText, ContactRound } from 'lucide-react';
 
 
 export default function Header() {
@@ -88,9 +88,9 @@ export default function Header() {
                         {/* Mobile Header */}
                         <header
                                 className={`md:hidden bg-white border-b border-gray-200 transition-all duration-300 ${variant === "back"
-                                                ? `sticky top-0 z-40 ${showHeader ? 'translate-y-0' : '-translate-y-full'
-                                                }`
-                                                : ''
+                                        ? `sticky top-0 z-40 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                                        }`
+                                        : ''
                                         }`}
                         >
                                 <div className="px-4 h-16 flex items-center justify-between">

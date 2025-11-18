@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, paginatedResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
-import { transformPostWithTaxonomies, serializePost } from '@/lib/transformers/post-transformer';
+import { transformPostWithTaxonomies } from '@/lib/transformers/post-transformer';
 
 // Valid post statuses (matching database check constraint)
 type PostStatus = 'DRAFT' | 'PUBLISHED';
@@ -207,11 +207,9 @@ export async function GET(request: NextRequest) {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-  const { user } = authResult;
-
   try {
+    const user = await requireAdmin();
+
     const body = await request.json();
     const {
       title,
@@ -288,12 +286,12 @@ export async function POST(request: NextRequest) {
 
     // Transform post to group terms by taxonomy
     const transformedPost = transformPostWithTaxonomies(post);
-
-    // Serialize for JSON response
-    const postResponse = serializePost(transformedPost);
-
-    return successResponse(postResponse, 'Post created successfully', 201);
+    return successResponse(transformedPost, 'Post created successfully', 201);
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Create post error:', error);
     return errorResponse('Failed to create post', 500);
   }

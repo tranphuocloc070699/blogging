@@ -5,7 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormGroup from "@/components/form/form-group";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui";
 import { TaxonomyDto, TermDto } from "@/types/posts";
 import { TaxonomyService, TermService } from "@/services";
@@ -18,7 +18,7 @@ export default function PostTerms({ className }: PostTermsProps) {
   const {
     setValue,
     watch,
-    formState: { errors },
+    // formState: { errors },
   } = useFormContext();
 
   const [taxonomies, setTaxonomies] = useState<TaxonomyDto[]>([]);
@@ -106,12 +106,25 @@ export default function PostTerms({ className }: PostTermsProps) {
             <label className="block text-sm font-medium mb-2">
               Select Taxonomy
             </label>
-            <Select
+            <Select onValueChange={setSelectedTaxonomy} value={selectedTaxonomy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a taxonomy first" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Status</SelectLabel>
+                  {
+                    taxonomyOptions.map(taxonomyOption => <SelectItem key={taxonomyOption.value} value={taxonomyOption.value}>{taxonomyOption.label}</SelectItem>)
+                  }
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {/* <Select
               placeholder="Choose a taxonomy first"
               options={taxonomyOptions}
               value={selectedTaxonomy}
               onValueChange={setSelectedTaxonomy}
-            />
+            /> */}
           </div>
 
           {selectedTaxonomy && (
@@ -121,13 +134,26 @@ export default function PostTerms({ className }: PostTermsProps) {
               </label>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <Select
+                  <Select onValueChange={handleAddTerm} value={""} disabled={termOptions.length === 0}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a term to add" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Status</SelectLabel>
+                        {
+                          termOptions.map(termOption => <SelectItem key={termOption.value} value={termOption.value}>{termOption.label}</SelectItem>)
+                        }
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {/* <Select
                     placeholder="Select a term to add"
                     options={termOptions}
                     value=""
                     onValueChange={handleAddTerm}
                     disabled={termOptions.length === 0}
-                  />
+                  /> */}
                 </div>
               </div>
               {termOptions.length === 0 && availableTerms.length > 0 && (

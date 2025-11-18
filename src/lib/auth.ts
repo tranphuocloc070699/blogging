@@ -1,17 +1,19 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
+import { TOKEN_TYPE, USER_ROLE } from '@/config/enums';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const ACCESS_TOKEN_EXPIRE = parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || '3600'); // 1 hour
-const REFRESH_TOKEN_EXPIRE = parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRE || '604800'); // 7 days
+const JWT_SECRET = process.env["JWT_SECRET"] || '';
+const ACCESS_TOKEN_EXPIRE = parseInt(process.env["JWT_ACCESS_TOKEN_EXPIRE"] || '3600'); 
+const REFRESH_TOKEN_EXPIRE = parseInt(process.env["JWT_REFRESH_TOKEN_EXPIRE"] || '604800');
+
 
 export interface TokenPayload {
   userId: number;
   username: string;
   email?: string;
-  role: string;
-  type: 'access' | 'refresh';
+  role: (typeof USER_ROLE)[keyof typeof USER_ROLE];
+  type: TOKEN_TYPE;
 }
 
 // Type for user data that can be used to generate tokens
@@ -19,7 +21,12 @@ export interface UserForToken {
   id: number;
   username: string;
   email?: string | null;
-  role?: string | null;
+  role: (typeof USER_ROLE)[keyof typeof USER_ROLE] | null;
+}
+
+export interface SetAuthTokenProps{
+  type:TOKEN_TYPE,
+  token:string;
 }
 
 // Hash password
@@ -38,8 +45,8 @@ export function generateAccessToken(user: UserForToken): string {
     userId: user.id,
     username: user.username,
     email: user.email || undefined,
-    role: user.role || 'USER',
-    type: 'access',
+    role:  user.role || USER_ROLE.USER,
+    type: TOKEN_TYPE.ACCESS,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
@@ -53,8 +60,8 @@ export function generateRefreshToken(user: UserForToken): string {
     userId: user.id,
     username: user.username,
     email: user.email || undefined,
-    role: user.role || 'USER',
-    type: 'refresh',
+    role: user.role || USER_ROLE.USER,
+    type: TOKEN_TYPE.REFRESH,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
@@ -71,9 +78,23 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
+
+export async function setAuthTokenCookie({type,token} : SetAuthTokenProps) {
+   const cookieStore = await cookies();
+  const EXPIRED = type===TOKEN_TYPE.ACCESS ? ACCESS_TOKEN_EXPIRE : REFRESH_TOKEN_EXPIRE
+
+  cookieStore.set(type, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge:  EXPIRED,
+    path: '/',
+  });
+}
+
 export async function setAccessTokenCookie(token: string) {
   const cookieStore = await cookies();
-  cookieStore.set('accessToken', token, {
+  cookieStore.set(TOKEN_TYPE.ACCESS, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -86,7 +107,7 @@ export async function setAccessTokenCookie(token: string) {
 // Set refresh token cookie
 export async function setRefreshTokenCookie(token: string) {
   const cookieStore = await cookies();
-  cookieStore.set('refreshToken', token, {
+  cookieStore.set(TOKEN_TYPE.REFRESH, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -107,25 +128,44 @@ export async function getAccessTokenFromCookie(): Promise<string | undefined> {
 }
 
 
+export async function deleteAuthTokenCookie(type : TOKEN_TYPE) {
+  const cookieStore = await cookies();
+  let cookieName = 'refreshToken';
+
+  if(type===TOKEN_TYPE.ACCESS){
+cookieName = 'accessToken'
+  }
+  cookieStore.delete(cookieName);
+}
+
 // Delete refresh token cookie
 export async function deleteRefreshTokenCookie() {
+
   const cookieStore = await cookies();
-  cookieStore.delete('refreshToken');
+ cookieStore.set(TOKEN_TYPE.REFRESH, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0, // Expire immediately
+    path: '/',
+  });
 }
 
 export async function deleteAccessTokenCookie() {
   const cookieStore = await cookies();
-  cookieStore.delete('accessToken');
+ cookieStore.set(TOKEN_TYPE.ACCESS, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0, // Expire immediately
+    path: '/',
+  });
 }
 
 
-// Get user from access token in Authorization header
 export function getUserFromAuthHeader(authHeader: string | undefined): TokenPayload | null {
   if (!authHeader) {
     return null;
   }
-
-
-  // const token = authHeader.substring(7);
   return verifyToken(authHeader);
 }

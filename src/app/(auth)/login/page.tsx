@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import AuthWrapper from './auth-wrapper';
 import LoginForm from './login-form';
 
@@ -8,14 +9,16 @@ export const metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthWrapper
-      title={
-        <>
-          Welcome Back <br />
-        </>
-      }
-    >
-      <LoginForm />
-    </AuthWrapper>
+    <Suspense fallback={"Loading..."}>
+      <AuthWrapper
+        title={
+          <>
+            Welcome Back <br />
+          </>
+        }
+      >
+        <LoginForm />
+      </AuthWrapper>
+    </Suspense>
   );
 }

@@ -35,11 +35,9 @@ import { errorResponse, successResponse } from "@/lib/response";
  *         description: Internal server error
  */
 export async function GET(request: NextRequest) {
-	const authResult = requireAuth(request);
-	if (authResult instanceof Response) return authResult;
-
 	try {
-		const userId = parseInt(authResult.user.userId);
+		const authResult = await requireAuth();
+		const userId = authResult.userId;
 		const { searchParams } = new URL(request.url);
 		const page = parseInt(searchParams.get('page') || '1');
 		const size = parseInt(searchParams.get('size') || '10');
@@ -108,6 +106,10 @@ export async function GET(request: NextRequest) {
 			'Viewed posts retrieved successfully'
 		);
 	} catch (error) {
+		// If it's already a Response (from middleware), return it
+		if (error instanceof Response) {
+			return error;
+		}
 		console.error('Get viewed posts error:', error);
 		return errorResponse('Failed to retrieve viewed posts', 500);
 	}

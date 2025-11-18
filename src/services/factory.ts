@@ -92,10 +92,6 @@ class HttpFactory {
     }
   }
 
-  // Get access token from Zustand store
-  private getAccessToken(): string {
-    return useUserStore.getState().accessToken;
-  }
 
   private clearAuth(): void {
     useUserStore.getState().setAccessToken("");

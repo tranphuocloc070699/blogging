@@ -16,8 +16,6 @@ import PostSummary from "./post-summary";
 import PostContent from "./post-content";
 import PostThumbnail from "./post-thumbnail";
 import PostTerms from "./post-terms";
-import PostSeo from "./post-seo";
-
 // Form validation schema
 const postFormSchema = z.object({
   title: z
@@ -62,7 +60,6 @@ const MAP_STEP_TO_COMPONENT = {
   [formParts.content]: PostContent,
   [formParts.thumbnail]: PostThumbnail,
   [formParts.terms]: PostTerms,
-  [formParts.seo]: PostSeo,
 };
 
 interface CreateEditPostProps {
@@ -77,7 +74,7 @@ export default function CreateEditPost({
   className,
 }: CreateEditPostProps) {
   const [isLoading, setLoading] = useState(false);
-  const [isDraft, setIsDraft] = useState(false);
+  // const [isDraft, setIsDraft] = useState(false);
   const router = useRouter();
   const postService = new PostService();
 
@@ -115,12 +112,12 @@ export default function CreateEditPost({
     }
   };
 
-  const handleSaveDraft = async () => {
-    setIsDraft(true);
-    methods.setValue("status", "DRAFT");
-    await methods.handleSubmit(onSubmit)();
-    setIsDraft(false);
-  };
+  // const handleSaveDraft = async () => {
+  //   setIsDraft(true);
+  //   methods.setValue("status", "DRAFT");
+  //   await methods.handleSubmit(onSubmit)();
+  //   setIsDraft(false);
+  // };
 
   const handlePublish = async () => {
     if (slug) {
@@ -182,7 +179,8 @@ export default function CreateEditPost({
                   type="button"
                   onClick={handlePublish}
                   disabled={isLoading}
-                  loading={isLoading && !isDraft}
+                  // loading={isLoading && !isDraft}
+                  loading={isLoading}
                 >
                   {slug ? "Update Post" : "Publish Post"}
                 </Button>

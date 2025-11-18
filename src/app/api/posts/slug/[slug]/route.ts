@@ -1,24 +1,17 @@
-import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
 import { getAuthUser } from '@/lib/middleware';
+import { NextRequest } from 'next/server';
 
 // GET /api/posts/slug/:slug - Get published post by slug
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  _ : NextRequest,{ params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  console.log({slugServer:slug})
   try {
-    // Get current user if authenticated (optional)
-
-    // console.log({cookie:request.cookies.get("accessToken")})
-
-
-    
     const authUser = await getAuthUser();
-    console.log({authUser})
     const userId = authUser?.userId;
 
     const post = await prisma.post.findFirst({

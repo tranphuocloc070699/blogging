@@ -12,7 +12,6 @@ import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 const loginSchema = z.object({
-  // email: z.string().email('Please enter a valid email').min(1, 'Email is required'),
   email: z.string().min(1, "Email is required"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
@@ -28,7 +27,7 @@ const initialValues: LoginFormData = {
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 

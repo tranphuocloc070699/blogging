@@ -18,11 +18,8 @@ import { useUserStore } from '@/store/user.store';
 export default function ProfilePage() {
         const { user, isAuthenticated } = useUserStore();
         const [likedPosts, setLikedPosts] = useState<any[]>([]);
-        const [viewedPosts, setViewedPosts] = useState<any[]>([]);
         const [likedLoading, setLikedLoading] = useState(true);
-        const [viewedLoading, setViewedLoading] = useState(true);
         const [likedTotal, setLikedTotal] = useState(0);
-        const [viewedTotal, setViewedTotal] = useState(0);
 
         useEffect(() => {
                 if (!isAuthenticated) {
@@ -49,28 +46,7 @@ export default function ProfilePage() {
                                 setLikedLoading(false);
                         }
                 };
-
-                // Fetch viewed posts
-                const fetchViewedPosts = async () => {
-                        try {
-                                setViewedLoading(true);
-                                const response = await postService.getMyViewedPosts({
-                                        page: 1,
-                                        size: 10,
-                                });
-                                if (response.body.data) {
-                                        setViewedPosts(response.body.data.posts || []);
-                                        setViewedTotal(response.body.data.total || 0);
-                                }
-                        } catch (error) {
-                                console.error('Failed to fetch viewed posts:', error);
-                        } finally {
-                                setViewedLoading(false);
-                        }
-                };
-
                 fetchLikedPosts();
-                // fetchViewedPosts();
         }, [isAuthenticated]);
 
         return (

@@ -1,10 +1,10 @@
-import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyToken, generateAccessToken, generateRefreshToken, setRefreshTokenCookie, getRefreshTokenFromCookie, setAccessTokenCookie } from '@/lib/auth';
 import { successResponse, forbiddenResponse } from '@/lib/response';
+import { TOKEN_TYPE } from '@/config/enums';
 
 // GET /api/users - Authenticate with refresh token
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get refresh token from cookie
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Verify refresh token
     const payload = verifyToken(refreshToken);
 
-    if (!payload || payload.type !== 'refresh') {
+    if (!payload || payload.type !== TOKEN_TYPE.REFRESH) {
       return forbiddenResponse('Invalid or expired refresh token');
     }
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse('User not found');
     }
 
-
+    
 
     // Generate new tokens
     const newAccessToken = generateAccessToken(user);

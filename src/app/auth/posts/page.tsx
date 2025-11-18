@@ -42,7 +42,7 @@ const PostsPage = () => {
   const loadPosts = async () => {
     try {
       const { body } = await postService.getAllPosts();
-      setPosts(Array.isArray(body.data) ? body.data : []);
+      setPosts(Array.isArray(body.data) ? body.data as PostSummary[] : []);
     } catch (error) {
       console.error('Failed to load posts:', error);
       toast.error('Failed to load posts');
@@ -133,11 +133,10 @@ const PostsPage = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                post.status === 'PUBLISHED'
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${post.status === 'PUBLISHED'
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-gray-100 text-gray-800'
-                              }`}
+                                }`}
                             >
                               {post.status}
                             </span>

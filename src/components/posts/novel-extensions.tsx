@@ -1,53 +1,49 @@
 import {
-  TiptapImage,
-  TiptapLink,
-  UpdatedImage,
-  TaskList,
-  TaskItem,
-  HorizontalRule,
-  StarterKit,
-  Placeholder,
+  CodeBlockLowlight,
   Command,
   createSuggestionItems,
-  renderItems,
-  ImageResizer,
   GlobalDragHandle,
-  CodeBlockLowlight,
+  HorizontalRule,
+  Placeholder,
+  renderItems,
+  StarterKit,
+  TaskItem,
+  TaskList,
+  TiptapImage,
+  TiptapLink,
+  UpdatedImage
 } from 'novel';
 
+import { useUserStore } from "@/store/user.store";
+import { Extension, Mark, mergeAttributes, Node } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { cx } from 'class-variance-authority';
+import { common, createLowlight } from 'lowlight';
 import {
+  Code,
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
+  ImageIcon,
+  Link,
   List,
   ListOrdered,
   MessageSquarePlus,
-  Code,
-  CheckSquare,
-  ImageIcon,
   Quote,
-  Youtube,
-  FileText,
-  Highlighter,
-  Link,
+  Youtube
 } from 'lucide-react';
-import { Mark, mergeAttributes } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { EditorView } from '@tiptap/pm/view';
-import { useUserStore } from "@/store/user.store";
-import { Extension, Node } from '@tiptap/core';
-import { common, createLowlight } from 'lowlight';
-import { keymap } from '@tiptap/pm/keymap';
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common);
+
+
 
 // Placeholder extension configuration
 const placeholder = Placeholder.configure({
   placeholder: ({ node }) => {
     if (node.type.name === 'heading') {
-      return `Heading ${node.attrs.level}`;
+      return `Heading ${node.attrs["level"]}`;
     }
     return "Press '/' for commands, or start typing...";
   },
@@ -107,7 +103,7 @@ const createUploadImagePlugin = () => {
             uploadImage(file)
               .then(url => {
                 const { schema } = view.state;
-                const node = schema.nodes.image.create({
+                const node = schema?.nodes["image"]?.create({
                   src: url,
                   width: '200',
                   height: 'auto',
@@ -115,7 +111,7 @@ const createUploadImagePlugin = () => {
                   alt: '',
                   caption: ''
                 });
-                const transaction = view.state.tr.replaceSelectionWith(node);
+                const transaction = view.state.tr.replaceSelectionWith(node as any);
                 view.dispatch(transaction);
               })
               .catch(error => {
@@ -152,7 +148,7 @@ const createUploadImagePlugin = () => {
         images.forEach(image => {
           uploadImage(image)
             .then(url => {
-              const node = schema.nodes.image.create({
+              const node = schema.nodes["image"]?.create({
                 src: url,
                 width: '200',
                 height: 'auto',
@@ -160,7 +156,7 @@ const createUploadImagePlugin = () => {
                 alt: '',
                 caption: ''
               });
-              const transaction = view.state.tr.insert(coordinates?.pos || 0, node);
+              const transaction = view.state.tr.insert(coordinates?.pos || 0, node as any);
               view.dispatch(transaction);
             })
             .catch(error => {
@@ -184,35 +180,35 @@ const tiptapImage = TiptapImage.extend({
         default: 'center',
         parseHTML: element => element.getAttribute('data-align') || 'center',
         renderHTML: attributes => ({
-          'data-align': attributes.align,
+          'data-align': attributes["align"],
         }),
       },
       width: {
         default: '200',
         parseHTML: element => element.getAttribute('width') || '200',
         renderHTML: attributes => ({
-          width: attributes.width,
+          width: attributes["width"],
         }),
       },
       height: {
         default: 'auto',
         parseHTML: element => element.getAttribute('height') || 'auto',
         renderHTML: attributes => ({
-          height: attributes.height,
+          height: attributes["height"],
         }),
       },
       alt: {
         default: '',
         parseHTML: element => element.getAttribute('alt') || '',
         renderHTML: attributes => ({
-          alt: attributes.alt,
+          alt: attributes["alt"],
         }),
       },
       caption: {
         default: '',
         parseHTML: element => element.getAttribute('data-caption') || '',
         renderHTML: attributes => ({
-          'data-caption': attributes.caption,
+          'data-caption': attributes["caption"],
         }),
       },
     };
@@ -226,16 +222,16 @@ const tiptapImage = TiptapImage.extend({
     return ({ node, editor, getPos }) => {
       const container = document.createElement('div');
       container.className = 'image-wrapper-container relative inline-block w-full';
-      if (node.attrs.align) container.setAttribute('data-align', node.attrs.align);
+      if (node.attrs["align"]) container.setAttribute('data-align', node.attrs["align"]);
 
       const img = document.createElement('img');
-      img.src = node.attrs.src;
-      img.alt = node.attrs.alt || '';
+      img.src = node.attrs["src"];
+      img.alt = node.attrs["alt"] || '';
       img.className = 'rounded-lg border border-gray-300 cursor-pointer';
-      if (node.attrs.width) img.style.width = node.attrs.width + 'px';
-      if (node.attrs.height && node.attrs.height !== 'auto') img.style.height = node.attrs.height + 'px';
-      if (node.attrs.align) img.setAttribute('data-align', node.attrs.align);
-      if (node.attrs.caption) img.setAttribute('data-caption', node.attrs.caption);
+      if (node.attrs["width"]) img.style.width = node.attrs["width"] + 'px';
+      if (node.attrs["height"] && node.attrs["height"] !== 'auto') img.style.height = node.attrs["height"] + 'px';
+      if (node.attrs["align"]) img.setAttribute('data-align', node.attrs["align"]);
+      if (node.attrs["caption"]) img.setAttribute('data-caption', node.attrs["caption"]);
 
       // Create alignment toolbar
       const toolbar = document.createElement('div');
@@ -244,11 +240,11 @@ const tiptapImage = TiptapImage.extend({
 
       // Create caption display
       const captionText = document.createElement('p');
-      const align = node.attrs.align || 'center';
+      const align = node.attrs["align"] || 'center';
       const alignClass = align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
       captionText.className = `text-sm text-gray-500 italic mt-2 clear-both ${alignClass}`;
-      captionText.textContent = node.attrs.caption || '';
-      captionText.style.display = node.attrs.caption ? 'block' : 'none';
+      captionText.textContent = node.attrs["caption"] || '';
+      captionText.style.display = node.attrs["caption"] ? 'block' : 'none';
 
       // Toggle toolbar on image click
       let isToolbarVisible = false;
@@ -273,7 +269,7 @@ const tiptapImage = TiptapImage.extend({
       const onSelectionUpdate = () => {
         if (!editor || typeof getPos !== 'function') return;
 
-        const { from, to } = editor.state.selection;
+        const { from } = editor.state.selection;
         const pos = getPos();
 
         // Check if cursor is still on this image node
@@ -293,41 +289,41 @@ const tiptapImage = TiptapImage.extend({
       // Left align button
       const leftBtn = document.createElement('button');
       leftBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>';
-      leftBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs.align === 'left' ? ' bg-blue-100 text-blue-600' : '');
+      leftBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'left' ? ' bg-blue-100 text-blue-600' : '');
       leftBtn.type = 'button';
       leftBtn.title = 'Align left';
 
       // Center align button
       const centerBtn = document.createElement('button');
       centerBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>';
-      centerBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs.align === 'center' ? ' bg-blue-100 text-blue-600' : '');
+      centerBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'center' ? ' bg-blue-100 text-blue-600' : '');
       centerBtn.type = 'button';
       centerBtn.title = 'Align center';
 
       // Right align button
       const rightBtn = document.createElement('button');
       rightBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg>';
-      rightBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs.align === 'right' ? ' bg-blue-100 text-blue-600' : '');
+      rightBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'right' ? ' bg-blue-100 text-blue-600' : '');
       rightBtn.type = 'button';
       rightBtn.title = 'Align right';
 
       // Full width button
       const fullBtn = document.createElement('button');
       fullBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>';
-      fullBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs.align === 'full' ? ' bg-blue-100 text-blue-600' : '');
+      fullBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'full' ? ' bg-blue-100 text-blue-600' : '');
       fullBtn.type = 'button';
       fullBtn.title = 'Full width';
 
       // Caption button
       const captionBtn = document.createElement('button');
       captionBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>';
-      captionBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs.caption ? ' bg-blue-100 text-blue-600' : '');
+      captionBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["caption"] ? ' bg-blue-100 text-blue-600' : '');
       captionBtn.type = 'button';
       captionBtn.title = 'Add caption';
       captionBtn.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const caption = prompt('Enter image caption / alt text:', node.attrs.caption || '');
+        const caption = prompt('Enter image caption / alt text:', node.attrs["caption"] || '');
         if (caption !== null) {
           if (typeof getPos === 'function') {
             editor.commands.updateAttributes('image', {
@@ -532,12 +528,10 @@ const tiptapLink = TiptapLink.extend({
   },
 });
 
-// YouTube extension
+
 const YouTubeExtension = Node.create({
   name: 'youtube',
-
   group: 'block',
-
   atom: true,
 
   addAttributes() {
@@ -557,7 +551,7 @@ const YouTubeExtension = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    const src = HTMLAttributes.src;
+    const src = HTMLAttributes["src"];
     return [
       'div',
       { 'data-youtube-video': '' },
@@ -578,7 +572,7 @@ const YouTubeExtension = Node.create({
     return {
       setYouTubeVideo:
         (options: { src: string }) =>
-          ({ commands }) => {
+          ({ commands }: any) => {
             return commands.insertContent({
               type: this.name,
               attrs: options,
@@ -587,6 +581,8 @@ const YouTubeExtension = Node.create({
     };
   },
 });
+
+export default YouTubeExtension;
 
 // Highlight Mark - Similar to Notion's Cmd+E (grey background with bold text)
 const HighlightMark = Mark.create({
@@ -604,7 +600,7 @@ const HighlightMark = Mark.create({
         default: 'grey',
         parseHTML: element => element.getAttribute('data-color') || 'grey',
         renderHTML: attributes => ({
-          'data-color': attributes.color,
+          'data-color': attributes["color"],
         }),
       },
     };
@@ -659,7 +655,7 @@ const HighlightMark = Mark.create({
         (attributes) =>
           ({ commands, state }) => {
             // Check if highlight mark is active
-            const isActive = state.schema.marks.highlight.isInSet(state.selection.$from.marks());
+            const isActive = state.schema.marks["highlight"]?.isInSet(state.selection.$from.marks());
 
             if (isActive) {
               // If highlight exists, remove it first then add new one with different color
@@ -689,7 +685,7 @@ const HighlightMark = Mark.create({
         const { $from } = selection;
 
         // Check if we're at the end of a highlight mark
-        const highlight = state.schema.marks.highlight.isInSet($from.marks());
+        const highlight = state.schema.marks["highlight"]?.isInSet($from.marks());
 
         if (highlight && selection.empty) {
           // Insert a space and remove the highlight mark

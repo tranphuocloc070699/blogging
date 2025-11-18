@@ -34,7 +34,7 @@ export default function EditBookPage() {
   useEffect(() => {
     const loadBook = async () => {
       try {
-        const id = parseInt(params.id as string);
+        const id = parseInt(params["id"] as string);
         const { body } = await bookService.getBookById(id);
         setBook(body.data);
       } catch (error) {
@@ -44,10 +44,10 @@ export default function EditBookPage() {
       }
     };
 
-    if (params.id) {
+    if (params["id"]) {
       loadBook();
     }
-  }, [params.id]);
+  }, [params["id"]]);
 
   if (loading) {
     return (

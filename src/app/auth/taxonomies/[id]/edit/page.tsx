@@ -34,7 +34,7 @@ export default function EditTaxonomyPage() {
   useEffect(() => {
     const loadTaxonomy = async () => {
       try {
-        const id = parseInt(params.id as string);
+        const id = parseInt(params["id"] as string);
         const { body } = await taxonomyService.getTaxonomyById(id);
         setTaxonomy(body.data);
       } catch (error) {
@@ -44,10 +44,10 @@ export default function EditTaxonomyPage() {
       }
     };
 
-    if (params.id) {
+    if (params["id"]) {
       loadTaxonomy();
     }
-  }, [params.id]);
+  }, [params["id"]]);
 
   if (loading) {
     return (

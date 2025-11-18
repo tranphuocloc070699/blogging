@@ -100,10 +100,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/terms - Create term (Admin only)
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+
     const body = await request.json();
     const { name, slug, description, taxonomyId } = body;
 
@@ -171,6 +170,10 @@ export async function POST(request: NextRequest) {
       201
     );
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Create term error:', error);
 
     // Handle Prisma unique constraint errors

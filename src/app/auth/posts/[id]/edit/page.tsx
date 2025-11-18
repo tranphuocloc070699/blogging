@@ -34,7 +34,7 @@ export default function EditPostPage() {
   useEffect(() => {
     const loadPost = async () => {
       try {
-        const id = parseInt(params.id as string);
+        const id = parseInt(params["id"] as string);
         const { body } = await postService.getPostById(id);
         setPost(body.data);
       } catch (error) {
@@ -45,10 +45,10 @@ export default function EditPostPage() {
       }
     };
 
-    if (params.id) {
+    if (params["id"]) {
       loadPost();
     }
-  }, [params.id]);
+  }, [params["id"]]);
 
   if (loading) {
     return (
@@ -90,7 +90,7 @@ export default function EditPostPage() {
         showBackButton={true}
         backHref={routes.posts.dashboard}
       />
-      <UpsavePost slug={params.id as string} post={post} />
+      <UpsavePost slug={params["id"] as string} post={post} />
     </>
   );
 }

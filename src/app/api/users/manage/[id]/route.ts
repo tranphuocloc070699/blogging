@@ -7,15 +7,15 @@ import { hashPassword } from '@/lib/auth';
 
 // GET /api/users/manage/:id - Get user by ID (Admin only)
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
+
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       select: {
         id: true,
         username: true,
@@ -39,6 +39,10 @@ export async function GET(
       postCount: _count.posts,
     });
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Get user error:', error);
     return errorResponse('Failed to fetch user', 500);
   }
@@ -47,18 +51,18 @@ export async function GET(
 // PUT /api/users/manage/:id - Update user (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
+
     const body = await request.json();
     const { username, email, password, role } = body;
 
     // Check if user exists
     const existing = await prisma.user.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existing) {
@@ -75,7 +79,7 @@ export async function PUT(
       const duplicate = await prisma.user.findFirst({
         where: {
           AND: [
-            { id: { not: parseInt(params.id) } },
+            { id: { not: parseInt(id) } },
             {
               OR: [
                 ...(username ? [{ username: { equals: username, mode: 'insensitive' as const } }] : []),
@@ -100,7 +104,7 @@ export async function PUT(
 
     // Update user
     const user = await prisma.user.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: updateData,
       select: {
         id: true,
@@ -117,6 +121,10 @@ export async function PUT(
       'User updated successfully'
     );
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Update user error:', error);
 
     if (error.code === 'P2002') {
@@ -129,16 +137,15 @@ export async function PUT(
 
 // DELETE /api/users/manage/:id - Delete user (Admin only)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+    const { id } = await params;
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         _count: {
           select: { posts: true },
@@ -157,11 +164,15 @@ export async function DELETE(
 
     // Delete user
     await prisma.user.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return successResponse(null, 'User deleted successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Delete user error:', error);
     return errorResponse('Failed to delete user', 500);
   }

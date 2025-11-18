@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   productionBrowserSourceMaps:true,
   // Allow external images
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {

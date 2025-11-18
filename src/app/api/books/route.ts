@@ -83,10 +83,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/books - Create book (Admin only)
 export async function POST(request: NextRequest) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
   try {
+    await requireAdmin();
+
     const body = await request.json();
     const { name, author, publishDate, review, quotes, thumbnail } = body;
 
@@ -113,6 +112,10 @@ export async function POST(request: NextRequest) {
       201
     );
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Create book error:', error);
     return errorResponse('Failed to create book', 500);
   }

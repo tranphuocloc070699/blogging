@@ -83,39 +83,3 @@ function AuthHeader() {
     </header>
   );
 }
-
-const footerMenu = [
-  {
-    name: "Help",
-    href: "/",
-  },
-  {
-    name: "Privacy",
-    href: "/",
-  },
-  {
-    name: "Terms",
-    href: "/",
-  },
-];
-
-function AuthFooter() {
-  return (
-    <footer className="flex flex-col-reverse items-center justify-between px-4 py-5 lg:flex-row lg:px-16 lg:py-6 2xl:px-24 2xl:py-10">
-      <div className="text-center text-sm leading-relaxed text-stone-500 lg:text-start">
-        © 2024 Rainy & Coffee. All rights reserved.
-      </div>
-      <div className="-mx-2.5 flex items-center justify-end pb-3 text-sm font-medium text-stone-600 lg:w-1/2 lg:pb-0">
-        {footerMenu.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className="px-2.5 py-1.5 transition-colors hover:text-blue-600"
-          >
-            {item.name}
-          </Link>
-        ))}
-      </div>
-    </footer>
-  );
-}

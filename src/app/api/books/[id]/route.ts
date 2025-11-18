@@ -6,12 +6,13 @@ import { serializeBigInt } from '@/lib/api-utils';
 
 // GET /api/books/:id - Get book by ID
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _: NextRequest,
+   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params; 
   try {
     const book = await prisma.book.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!book) {
@@ -28,18 +29,19 @@ export async function GET(
 // PUT /api/books/:id - Update book (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
+  const { id } = await params;
 
   try {
+    await requireAdmin();
+
     const body = await request.json();
     const { name, author, publishDate, review, quotes, thumbnail } = body;
 
     // Check if book exists
     const existing = await prisma.book.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existing) {
@@ -48,7 +50,7 @@ export async function PUT(
 
     // Update book
     const book = await prisma.book.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         ...(name !== undefined && { name }),
         ...(author !== undefined && { author }),
@@ -64,6 +66,10 @@ export async function PUT(
       'Book updated successfully'
     );
   } catch (error: any) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Update book error:', error);
     return errorResponse('Failed to update book', 500);
   }
@@ -71,16 +77,17 @@ export async function PUT(
 
 // DELETE /api/books/:id - Delete book (Admin only)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+   _: NextRequest,
+   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
+  const {id} = await params;
 
   try {
+    await requireAdmin();
+
     // Check if book exists
     const book = await prisma.book.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!book) {
@@ -89,11 +96,15 @@ export async function DELETE(
 
     // Delete book
     await prisma.book.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return successResponse(null, 'Book deleted successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Delete book error:', error);
     return errorResponse('Failed to delete book', 500);
   }

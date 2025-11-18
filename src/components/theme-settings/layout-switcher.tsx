@@ -1,15 +1,13 @@
-import React from 'react';
+import BoronIcon from "@/components/icons/layout/boron-icon";
 import HydrogenIcon from "@/components/icons/layout/hydrogen-icon";
+import DrawerBlock from "@/components/theme-settings/drawer-block";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { LAYOUT_OPTIONS } from "@/config/enums";
+import { useLayout } from "@/hooks/use-layout";
+import BerylliumIcon from '../icons/layout/beryllium-icon';
+import CarbonIcon from '../icons/layout/carbon-icon';
 import HeliumIcon from '../icons/layout/helium-icon';
 import LithiumIcon from '../icons/layout/lithium-icon';
-import BerylliumIcon from '../icons/layout/beryllium-icon';
-import BoronIcon from "@/components/icons/layout/boron-icon";
-import CarbonIcon from '../icons/layout/carbon-icon';
-import {LAYOUT_OPTIONS} from "@/config/enums";
-import {useLayout} from "@/hooks/use-layout";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {AlignLeft, AlignRight} from "lucide-react";
-import DrawerBlock from "@/components/theme-settings/drawer-block";
 
 const layoutOptions = [
   {
@@ -39,42 +37,42 @@ const layoutOptions = [
 ];
 
 const LayoutSwitcher = () => {
-  const {layout, setLayout} = useLayout()
+  const { layout, setLayout } = useLayout()
 
   return (
-      <DrawerBlock title="Layout">
-        <RadioGroup
-            value={layout}
-            onValueChange={setLayout}
-            className="grid grid-cols-3 gap-4"
-        >
+    <DrawerBlock title="Layout">
+      <RadioGroup
+        value={layout}
+        onValueChange={setLayout}
+        className="grid grid-cols-3 gap-4"
+      >
 
-          {layoutOptions.map((item) => (
-              <div
-                  className={"relative"} key={item.value}>
-                <RadioGroupItem
-                    value={item.value}
-                    id={"theme-switcher-" + item.value}
-                    className="peer h-full w-full absolute inset-0 opacity-0"
-                />
-                <label htmlFor={"theme-switcher-" + item.value}
-                       className={"peer-data-[state=checked]:[&>span]:ring-2 peer-data-[state=checked]:[&>small]:text-primary"}>
+        {layoutOptions.map((item) => (
+          <div
+            className={"relative"} key={item.value}>
+            <RadioGroupItem
+              value={item.value}
+              id={"theme-switcher-" + item.value}
+              className="peer h-full w-full absolute inset-0 opacity-0"
+            />
+            <label htmlFor={"theme-switcher-" + item.value}
+              className={"peer-data-[state=checked]:[&>span]:ring-2 peer-data-[state=checked]:[&>small]:text-primary"}>
               <span
-                  className="radio-active  inline-flex justify-center rounded-lg capitalize ring-offset-4 ring-offset-gray-0 duration-150 dark:ring-offset-gray-100">
+                className="radio-active  inline-flex justify-center rounded-lg capitalize ring-offset-4 ring-offset-gray-0 duration-150 dark:ring-offset-gray-100">
                 <item.icon
-                    aria-label={item.value}
-                    className="h-full w-full"
+                  aria-label={item.value}
+                  className="h-full w-full"
                 />
-            </span>{' '}
-                  <small className="inline-block w-full text-center capitalize">
-                    {item.value}
-                  </small>
-                </label>
-              </div>
+              </span>{' '}
+              <small className="inline-block w-full text-center capitalize">
+                {item.value}
+              </small>
+            </label>
+          </div>
 
-          ))}
-        </RadioGroup>
-      </DrawerBlock>
+        ))}
+      </RadioGroup>
+    </DrawerBlock>
   );
 };
 

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import FormGroup from "@/components/form/form-group";
 import { Input } from "@/components/ui/input";
 import { Select, Textarea } from "@/components/ui";
+import { SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statusOptions = [
   { label: "Draft", value: "DRAFT" },
@@ -34,7 +35,7 @@ export default function PostSummary({ className }: PostSummaryProps) {
         label="Title"
         placeholder="Enter post title"
         {...register("title")}
-        error={errors.title?.message as string}
+        error={errors["title"]?.message as string}
         className="col-span-full"
       />
 
@@ -42,7 +43,7 @@ export default function PostSummary({ className }: PostSummaryProps) {
         label="Slug"
         placeholder="post-slug-url"
         {...register("slug")}
-        error={errors.slug?.message as string}
+        error={errors["slug"]?.message as string}
         className="col-span-full"
       />
 
@@ -50,14 +51,31 @@ export default function PostSummary({ className }: PostSummaryProps) {
         name="status"
         control={control}
         render={({ field: { onChange, value } }) => (
-          <Select
-            label="Status"
-            options={statusOptions}
-            value={value}
-            onValueChange={onChange}
-            error={errors?.status?.message as string}
-            placeholder="Select status"
-          />
+          // <Select
+          //   label="Status"
+          //   options={statusOptions}
+          //   value={value}
+          //   onValueChange={onChange}
+          //   error={errors?.status?.message as string}
+          //   placeholder="Select status"
+          // />
+              <>
+              <Select onValueChange={onChange} value={value}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Status</SelectLabel>
+          {
+statusOptions.map(statusOption => <SelectItem key={statusOption.value} value={statusOption.value}>{statusOption.label}</SelectItem>)
+          }
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+
+              </>
+
         )}
       />
 
@@ -76,9 +94,9 @@ export default function PostSummary({ className }: PostSummaryProps) {
             />
           )}
         />
-        {errors.excerpt?.message && (
+        {errors["excerpt"]?.message && (
           <p className="mt-1 text-sm text-red-600">
-            {errors.excerpt.message as string}
+            {errors["excerpt"].message as string}
           </p>
         )}
       </div>

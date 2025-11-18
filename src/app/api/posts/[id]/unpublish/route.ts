@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
@@ -8,11 +7,10 @@ interface RouteParams {
 }
 
 // PATCH /api/posts/[id]/unpublish - Unpublish a post (Admin only)
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const authResult = requireAdmin(request);
-  if (authResult instanceof Response) return authResult;
-
+export async function PATCH( { params }: RouteParams) {
   try {
+    await requireAdmin();
+
     const { id } = await params;
     const postId = parseInt(id);
 
@@ -84,6 +82,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return successResponse(postResponse, 'Post unpublished successfully');
   } catch (error) {
+    // If it's already a Response (from middleware), return it
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Unpublish post error:', error);
     return errorResponse('Failed to unpublish post', 500);
   }

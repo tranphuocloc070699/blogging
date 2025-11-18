@@ -1,9 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import FormGroup from '@/components/form/form-group';
+import { Controller, useFormContext } from 'react-hook-form';
 import NovelEditorWrapper from '../novel-editor-wrapper';
 
 interface PostContentProps {
@@ -37,8 +35,8 @@ export default function PostContent({ className }: PostContentProps) {
             </div>
           )}
         />
-        {errors.content?.message && (
-          <p className="mt-1 text-sm text-red-600">{errors.content.message as string}</p>
+        {errors["content"]?.message && (
+          <p className="mt-1 text-sm text-red-600">{errors["content"].message as string}</p>
         )}
         <div className="mt-2 text-xs text-gray-500">
           <p>💡 Tips:</p>

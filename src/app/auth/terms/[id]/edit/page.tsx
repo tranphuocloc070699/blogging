@@ -34,7 +34,7 @@ export default function EditTermPage() {
   useEffect(() => {
     const loadTerm = async () => {
       try {
-        const id = parseInt(params.id as string);
+        const id = parseInt(params["id"] as string);
         const { body } = await termService.getTermById(id);
         setTerm(body.data);
       } catch (error) {
@@ -44,10 +44,10 @@ export default function EditTermPage() {
       }
     };
 
-    if (params.id) {
+    if (params["id"]) {
       loadTerm();
     }
-  }, [params.id]);
+  }, [params["id"]]);
 
   if (loading) {
     return (
