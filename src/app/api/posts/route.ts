@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("post trigger...")
+
 
     const totalPages = Math.ceil(totalElements / size);
 

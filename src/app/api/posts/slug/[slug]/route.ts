@@ -9,7 +9,7 @@ export async function GET(
   _ : NextRequest,{ params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  console.log({slugServer:slug})
+
   try {
     const authUser = await getAuthUser();
     const userId = authUser?.userId;

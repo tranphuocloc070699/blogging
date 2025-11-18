@@ -11,9 +11,7 @@ export interface AuthenticatedRequest extends NextRequest {
 export async function getAuthUser(): Promise<TokenPayload | null> {
   // const authHeader = request.headers.get('authorization');
     const authHeader  = await getAccessTokenFromCookie();
-  console.log({ authHeader })
   const user = getUserFromAuthHeader(authHeader);
-  console.log({user})
   if (!user || user.type !== TOKEN_TYPE.ACCESS) {
     return null;
   }

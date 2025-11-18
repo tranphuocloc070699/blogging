@@ -46,7 +46,7 @@ const BlogPostItem = ({ post }: BlogPostItemProps) => {
                                 <div className="flex flex-col  flex-1">
                                         {/* Title */}
                                         <h2 className="font-semibold text-xl line-clamp-2 mb-0 group-hover:text-blue-600 transition-colors">
-                                                {post.title}
+                                                {post.title}``
                                         </h2>
 
                                         {/* Excerpt */}
