@@ -1,60 +1,48 @@
-# Dockerfile for Next.js Blogging Application
-FROM node:20-alpine AS base
+# Simple & bulletproof Dockerfile – no standalone nonsense
+FROM node:20-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
+# Install libc (needed by Prisma on Alpine)
 RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Copy package files
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
+# Install dependencies (supports npm, pnpm, yarn)
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
+    corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   else \
     npm install; \
   fi
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build Next.js application
+# Build the Next.js app
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm run build; \
+    pnpm run build; \
   else \
     npm run build; \
   fi
 
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
+# Create non-root user (security best practice)
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-
-# Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 USER nextjs
 
 EXPOSE 3000
 
+ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# This is the classic way – no standalone, just run next start
+CMD ["node_modules/.bin/next", "start"]
