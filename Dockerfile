@@ -34,10 +34,10 @@ RUN \
   fi
 
 # Create non-root user (security best practice)
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-USER nextjs
-RUN chown -R nextjs:nodejs /app
+# RUN addgroup --system --gid 1001 nodejs
+# RUN adduser --system --uid 1001 nextjs
+# USER nextjs
+# RUN chown -R nextjs:nodejs /app
 
 EXPOSE 3000
 
