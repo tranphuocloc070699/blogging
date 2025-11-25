@@ -1,0 +1,16 @@
+model Book {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  author      String    @db.VarChar(200)
+  publishDate DateTime? @map("publish_date") @db.Date
+  review      String
+  quotes      Json?     @db.Json
+  thumbnail   String?   @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([name], map: "idx_books_name")
+  @@index([author], map: "idx_books_author")
+  @@index([publishDate], map: "idx_books_publish_date")
+  @@map("books")
+}
