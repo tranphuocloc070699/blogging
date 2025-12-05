@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadToMinio } from '@/lib/minio';
 import { verifyToken } from '@/lib/auth.util';
-import { USER_ROLE } from '@/config/enums';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,12 +26,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is admin
-    if (payload.role !== USER_ROLE.ADMIN) {
-      return NextResponse.json(
-        { error: 'Forbidden - Only admins can upload images' },
-        { status: 403 }
-      );
-    }
+    // if (payload.role !== USER_ROLE.ADMIN) {
+    //   return NextResponse.json(
+    //     { error: 'Forbidden - Only admins can upload images' },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Get the uploaded file
     // console.log({ request }) 

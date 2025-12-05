@@ -87,7 +87,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const authorization = request.headers.get(HEADER_AUTHORIZATION);
     const user = getUserFromAuthHeader(authorization ?? "");
-    if (!user || user?.role !== USER_ROLE.ADMIN) throw forbiddenResponse('Admin access required');
+    // if (!user || user?.role !== USER_ROLE.ADMIN) throw forbiddenResponse('Admin access required');
+    if (!user ) throw forbiddenResponse('Not authenticated');
 
 
     const { id } = await params;

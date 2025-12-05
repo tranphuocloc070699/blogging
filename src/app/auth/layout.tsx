@@ -1,8 +1,8 @@
-import { requireAdmin } from '@/action/auth.action';
+import {requireAuth} from '@/action/auth.action';
 import { LayoutProps } from "@/config/props";
 import HydrogenLayout from "@/layouts/hydrogen/layout";
 const Layout = async ({ children }: LayoutProps) => {
-  await requireAdmin();
+  await requireAuth();
 
   // if (layout === LAYOUT_OPTIONS.HELIUM) {
   //   return <HeliumLayout>{children}</HeliumLayout>;

@@ -4,7 +4,6 @@ import { inter, mono, noto } from "@/config/fonts";
 import { siteConfig } from "@/config/site.config";
 import ThemeProvider from "@/components/provider/theme-provider";
 import GlobalModal from "@/components/modal-views/container";
-// import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
 

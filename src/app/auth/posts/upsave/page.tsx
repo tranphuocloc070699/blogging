@@ -9,14 +9,13 @@ import MinimalLayout from '@/layouts/minimal-layout';
 import { cn } from '@/lib/utils';
 import postService from '@/services/modules/post-service';
 import { useTermStore } from '@/store/term.store';
-import { ArrowLeft, Calendar, Tag, Upload, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useSession } from 'next-auth/react';
-import { USER_ROLE } from '@/config/enums';
 import resourceService from '@/services/modules/resource-service';
 
 export interface PostFormData {
@@ -53,7 +52,7 @@ export default function UpsavePage() {
 
   useEffect(() => {
     if (status !== "loading") {
-      if (!session || (session?.user as any).role !== USER_ROLE.ADMIN) {
+      if (!session) {
         router.push("/");
       }
     }

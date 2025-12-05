@@ -10,8 +10,8 @@ type MenuItem = {
 };
 
 
+
 export const menuItems: MenuItem[] = [
-  // label start
   {
     name: 'Overview',
   },
@@ -68,21 +68,6 @@ export const menuItems: MenuItem[] = [
         href: "/auth/terms/create",
       }]
   },
-  {
-    name: 'Users',
-    href: '/auth/users',
-    icon: <Users />,
-    dropdownItems: [
-      {
-        name: "Dashboard",
-        href: "/auth/users",
-      },
-      {
-        name: "Create User",
-        href: "/auth/users/create",
-      }
-    ]
-  },
   // {
   //   name: 'Books',
   //   href: '/auth/books',
@@ -98,4 +83,22 @@ export const menuItems: MenuItem[] = [
   //     }
   //   ]
   // },
+]
+
+export const menuAdminItems : MenuItem[] = [
+  {
+    name: 'Users',
+    href: '/auth/users',
+    icon: <Users />,
+    dropdownItems: [
+      {
+        name: "Dashboard",
+        href: "/auth/users",
+      },
+      {
+        name: "Create User",
+        href: "/auth/users/create",
+      }
+    ]
+  }
 ]

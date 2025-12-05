@@ -24,7 +24,7 @@ export default function Header() {
                         // { href: '/book', label: 'Book', icon: BookOpenText },
                         { href: '/about', label: 'About', icon: ContactRound },
                 ]
-                if (session?.user?.role === USER_ROLE.ADMIN) {
+                if (session?.user?.role === USER_ROLE.USER || session?.user?.role === USER_ROLE.ADMIN) {
                         navItems.push({
                                 href: "/auth",
                                 label: "Manager",

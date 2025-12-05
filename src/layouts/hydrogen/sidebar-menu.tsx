@@ -1,19 +1,22 @@
 "use client"
 
 
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useMemo, useState} from 'react';
 
 import {usePathname} from 'next/navigation';
-import {menuItems} from './menu-items';
+import {menuAdminItems, menuItems} from './menu-items';
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible";
 import {cn} from "@/lib/utils";
 import Link from 'next/link';
 import {ChevronDown} from "lucide-react";
+import {useClientSession} from "@/hooks/use-client-session";
+import {USER_ROLE} from "@/config/enums";
 
 const SidebarMenu = () => {
   const pathname = usePathname();
-
   const [openItems, setOpenItems] = useState<string[]>([])
+  const session = useClientSession();
+
 
   const toggleItem = (path?: string) => {
     if (!path) return;
@@ -23,9 +26,19 @@ const SidebarMenu = () => {
             : [...prev, path] // add
     )
   }
+
+  const sidebarMenuItems = useMemo(() => {
+    let items = menuItems;
+    if(session?.user?.role === USER_ROLE.ADMIN){
+      items = [...menuItems,...menuAdminItems];
+    }
+
+    return items;
+  },[session])
+
   return (
       <div className="mt-4 pb-3 3xl:mt-6">
-        {menuItems.map((item, index) => {
+        {sidebarMenuItems.map((item, index) => {
           let isOpen = false;
           if (item?.href != null) {
             isOpen = openItems.includes(item?.href)

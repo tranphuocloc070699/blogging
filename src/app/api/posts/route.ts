@@ -153,66 +153,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * @swagger
- * /api/posts:
- *   post:
- *     tags:
- *       - Posts
- *     summary: Create a new post
- *     description: Create a new blog post (Admin only)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreatePostRequest'
- *     responses:
- *       201:
- *         description: Post created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/Post'
- *       400:
- *         description: Missing required fields
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       409:
- *         description: Post with this slug already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
+
 export async function POST(request: NextRequest) {
   try {
     const authorization = request.headers.get(HEADER_AUTHORIZATION);
     const user = getUserFromAuthHeader(authorization ?? "");
-    if (!user || user?.role !== USER_ROLE.ADMIN) throw forbiddenResponse('Admin access required');
+    // if (!user || user?.role !== USER_ROLE.ADMIN) throw forbiddenResponse('Admin access required');
+    if (!user ) throw forbiddenResponse('Not authenticated');
 
 
     const body = await request.json();
