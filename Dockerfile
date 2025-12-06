@@ -26,15 +26,12 @@ COPY . .
 RUN npx prisma generate
 
 # Build the Next.js app
-
-RUN npm run build;
-
-#RUN \
-#  if [ -f pnpm-lock.yaml ]; then \
-#    pnpm run build; \
-#  else \
-#    npm run build; \
-#  fi
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    pnpm run build; \
+  else \
+    npm run build; \
+  fi
 
 # Create non-root user (security best practice)
 # RUN addgroup --system --gid 1001 nodejs
