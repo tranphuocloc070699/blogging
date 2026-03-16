@@ -25,8 +25,6 @@ export default function PageHeader({
       <header className={cn('mb-6 @container xs:-mt-2 lg:mb-7', className)}>
         <div className="flex flex-col @lg:flex-row @lg:items-center @lg:justify-between">
           <div>
-
-
             <Breadcrumb>
               <BreadcrumbList>
                 {breadcrumb.map((item, index) => (
