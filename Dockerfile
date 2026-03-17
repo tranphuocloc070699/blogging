@@ -18,7 +18,7 @@ RUN \
   else \
     npm install; \
   fi
-  
+
 # Copy source code
 COPY . .
 
