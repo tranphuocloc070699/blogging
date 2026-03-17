@@ -1,18 +1,41 @@
 import * as Minio from 'minio';
 import "@/lib/envConfig"
-// MinIO client configuration
-export const minioClient = new Minio.Client({
-  endPoint: process.env.MINIO_ENDPOINT || "",
-  port: Number(process.env.MINIO_PORT) || 443,
-  useSSL: Boolean(process.env.MINIO_USE_SSL) || false,
-  accessKey: process.env.MINIO_ACCESS_KEY || "",
-  secretKey: process.env.MINIO_SECRET_KEY || "",
-  // Use path-style URLs for better compatibility with reverse proxies
-  pathStyle: true,
-  // Add region
-  region: process.env.region,
-  // Disable signature V2 (use V4 only for better security and compatibility)
-  // This is important when using reverse proxies like Cloudflare
+
+// MinIO client configuration - lazy initialization to avoid build-time errors
+let _minioClient: Minio.Client | null = null;
+
+function getMinioClient(): Minio.Client {
+  if (!_minioClient) {
+    // Provide dummy values during build time when env vars are not available
+    const endPoint = process.env.MINIO_ENDPOINT || "localhost";
+    const port = Number(process.env.MINIO_PORT) || 9000;
+    const useSSL = process.env.MINIO_USE_SSL === 'true';
+    const accessKey = process.env.MINIO_ACCESS_KEY || "minioadmin";
+    const secretKey = process.env.MINIO_SECRET_KEY || "minioadmin";
+
+    _minioClient = new Minio.Client({
+      endPoint,
+      port,
+      useSSL,
+      accessKey,
+      secretKey,
+      // Use path-style URLs for better compatibility with reverse proxies
+      pathStyle: true,
+      // Add region
+      region: process.env.region,
+      // Disable signature V2 (use V4 only for better security and compatibility)
+      // This is important when using reverse proxies like Cloudflare
+    });
+  }
+  return _minioClient;
+}
+
+// Export a getter instead of the client directly
+export const minioClient = new Proxy({} as Minio.Client, {
+  get: (target, prop) => {
+    const client = getMinioClient();
+    return (client as any)[prop];
+  }
 });
 
 // Bucket name for blog images
