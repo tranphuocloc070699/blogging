@@ -7,11 +7,14 @@ echo "==================================="
 
 cd /var/www/blogging
 
+echo "Pulling latest code..."
+git pull origin master
+
 echo "Pulling latest Docker images..."
 docker compose -f docker-compose.prod.yml pull
 
 echo "Starting services..."
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d --force-recreate
 
 echo "Checking service status..."
 docker compose -f docker-compose.prod.yml ps
