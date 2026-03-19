@@ -1,48 +1,23 @@
-# Simple & bulletproof Dockerfile – no standalone nonsense
 FROM node:22-alpine
 
-# Install libc (needed by Prisma on Alpine)
 RUN apk add --no-cache libc6-compat
+
+RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
+COPY package.json ./
 
-# Install dependencies (supports npm, pnpm, yarn)
-RUN \
-  if [ -f pnpm-lock.yaml ]; then \
-    corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then \
-    npm ci; \
-  else \
-    npm install; \
-  fi
+RUN pnpm install
 
-# Copy source code
 COPY . .
 
-# Generate Prisma Client
-RUN npx prisma generate
+RUN pnpm prisma generate
 
-# Build the Next.js app
-RUN \
-  if [ -f pnpm-lock.yaml ]; then \
-    pnpm run build; \
-  else \
-    npm run build; \
-  fi
-
-# Create non-root user (security best practice)
-# RUN addgroup --system --gid 1001 nodejs
-# RUN adduser --system --uid 1001 nextjs
-# USER nextjs
-# RUN chown -R nextjs:nodejs /app
+RUN pnpm run build
 
 EXPOSE 3000
-
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# This is the classic way – no standalone, just run next start
 CMD ["node_modules/.bin/next", "start"]
