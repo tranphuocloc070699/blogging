@@ -44,7 +44,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'bash /var/www/blogging/deploy.sh'
+          ssh -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'bash /var/www/blogging/scripts/deploy.sh'
 
       - name: Discord notification - Success
         if: success()
