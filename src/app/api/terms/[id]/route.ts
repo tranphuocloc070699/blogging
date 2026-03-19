@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse, conflictResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
+import { isDatabaseUnavailableError } from '@/lib/app-error';
+import { serviceUnavailableResponse } from '@/lib/response';
 
 // GET /api/terms/:id - Get term by ID
 export async function GET(
@@ -38,6 +40,17 @@ export async function GET(
     });
   } catch (error) {
     console.error('Get term error:', error);
+
+    if (isDatabaseUnavailableError(error)) {
+      return serviceUnavailableResponse(
+        'Term data is temporarily unavailable. Please try again later.',
+        {
+          code: 'DATABASE_UNAVAILABLE',
+          retryable: true,
+        }
+      );
+    }
+
     return errorResponse('Failed to fetch term', 500);
   }
 }

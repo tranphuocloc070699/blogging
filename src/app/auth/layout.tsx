@@ -1,8 +1,8 @@
-import {requireAuth} from '@/action/auth.action';
+import { requireAdmin } from "@/action/auth.action";
 import { LayoutProps } from "@/config/props";
 import HydrogenLayout from "@/layouts/hydrogen/layout";
 const Layout = async ({ children }: LayoutProps) => {
-  await requireAuth();
+  await requireAdmin();
 
   // if (layout === LAYOUT_OPTIONS.HELIUM) {
   //   return <HeliumLayout>{children}</HeliumLayout>;
@@ -20,9 +20,7 @@ const Layout = async ({ children }: LayoutProps) => {
   //   return <CarbonLayout>{children}</CarbonLayout>;
   // }
 
-  return (
-    <HydrogenLayout>{children}</HydrogenLayout>
-  );
+  return <HydrogenLayout>{children}</HydrogenLayout>;
 };
 
 export default Layout;

@@ -51,4 +51,5 @@ yarn.lock
 CLAUDE.md
 AGENTS.md
 .claude
-docs
+docs/
+infras/

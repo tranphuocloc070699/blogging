@@ -1,28 +1,31 @@
-import { PostDashboardDto } from '@/types/posts'
-import React from 'react'
-import LoadMore from './load-more'
-import BlogPostItem from './blog-post-item'
+import { PostDashboardDto } from "@/types/posts";
+import React from "react";
+import LoadMore from "./load-more";
+import BlogPostItem from "./blog-post-item";
+import { ListEmpty } from "@/components/list-empty";
 
 interface BlogPostListProps {
-	posts: PostDashboardDto[];
-	hasMore?: boolean;
-	currentPage?: number;
-	total?: number;
+  posts: PostDashboardDto[];
+  hasMore?: boolean;
+  currentPage?: number;
+  total?: number;
 }
 
-const BlogPostList = ({ posts, hasMore = false, currentPage = 1 }: BlogPostListProps) => {
+const BlogPostList = ({
+  posts,
+  hasMore = false,
+  currentPage = 1,
+}: BlogPostListProps) => {
+  if (posts.length === 0) return <ListEmpty />;
 
-	return (
-		<div className="flex flex-col">
-			{posts.map((post) => (
-				<BlogPostItem key={post.id} post={post} />
-			))}
-
-			{hasMore && (
-				<LoadMore currentPage={currentPage} />
-			)}
-		</div>
-	);
+  return (
+    <div className="flex flex-col">
+      {posts.map((post) => (
+        <BlogPostItem key={post.id} post={post} />
+      ))}
+      {hasMore && <LoadMore currentPage={currentPage} />}
+    </div>
+  );
 };
 
 export default BlogPostList;

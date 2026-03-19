@@ -9,14 +9,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
       {
-        protocol: 'http',
-        hostname: '**',
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+        pathname: "/blogging/**",
       },
     ],
   },
