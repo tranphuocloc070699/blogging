@@ -2,7 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 // import { Select } from '@/components/ui/select';
 import {
@@ -54,6 +54,11 @@ const BlogPostFilterBar = () => {
 		}
 	}, [termStore.terms]);
 
+	useEffect(() => {
+		setSelectedTag(searchParams.get('tag') || '');
+		setSearchQuery(searchParams.get('search') || '');
+	}, [searchParams]);
+
 	const handleTagClick = (tagSlug: string) => {
 		setSelectedTag(tagSlug);
 		updateURL(tagSlug, searchQuery);
@@ -67,7 +72,16 @@ const BlogPostFilterBar = () => {
 		const params = new URLSearchParams();
 		if (tag && tag !== 'all') params.set('tag', tag);
 		if (search) params.set('search', search);
-		router.push(`/?${params.toString()}`);
+		const nextUrl = params.toString() ? `/?${params.toString()}` : '/';
+		const currentUrl = searchParams.toString() ? `/?${searchParams.toString()}` : '/';
+
+		if (nextUrl === currentUrl) {
+			return;
+		}
+
+		startTransition(() => {
+			router.replace(nextUrl, { scroll: false });
+		});
 	};
 
 	const toggleMobileSearch = () => {

@@ -1,73 +1,104 @@
-import {cn} from "@/lib/utils";
-import React from "react";
-import SearchNotFoundIcon from "@/components/icons/search-not-found-icon";
+import { cva, type VariantProps } from "class-variance-authority"
 
+import { cn } from "@/lib/utils"
 
-interface EmptyProps extends React.HTMLAttributes<HTMLDivElement> {
-  className?: string
-  image?: React.ReactNode
-  text?: string
-  description?: string
-  textClassName?: string
-  descriptionClassName?: string
-  imageClassName?: string
-  actions?: React.ReactNode
-  actionsClassName?: string
+function Empty({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty"
+      className={cn(
+        "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 text-balance rounded-lg border-dashed p-6 text-center md:p-12",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-const EMPTY_STYLES = {
-  container: "flex flex-col items-center justify-center  px-6",
-  imageWrapper: "mb-6 text-muted-foreground/60",
-  defaultImage: "size-16",
-  text: "text-base font-medium text-muted-foreground text-center max-w-sm",
-  description: "text-sm text-muted-foreground/80 text-center max-w-md mt-2",
-  actions: "mt-6 flex flex-col sm:flex-row gap-2",
+function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-header"
+      className={cn(
+        "flex max-w-sm flex-col items-center gap-2 text-center",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export const Empty = React.forwardRef<HTMLDivElement, EmptyProps>(
-    (
-        {
-          className,
-          image,
-          text = "No data available",
-          description,
-          textClassName,
-          descriptionClassName,
-          imageClassName,
-          actions,
-          actionsClassName,
-          ...props
-        },
-        ref
-    ) => {
-      return (
-          <div
-              ref={ref}
-              className={cn(EMPTY_STYLES.container, className)}
-              {...props}
-          >
-            <div className={cn(EMPTY_STYLES.imageWrapper, imageClassName)}>
-              {image || <SearchNotFoundIcon/>}
-            </div>
+const emptyMediaVariants = cva(
+  "mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg [&_svg:not([class*='size-'])]:size-6",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
-            {text && (
-                <p className={cn(EMPTY_STYLES.text, textClassName)}>
-                  {text}
-                </p>
-            )}
+function EmptyMedia({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof emptyMediaVariants>) {
+  return (
+    <div
+      data-slot="empty-icon"
+      data-variant={variant}
+      className={cn(emptyMediaVariants({ variant, className }))}
+      {...props}
+    />
+  )
+}
 
-            {description && (
-                <p className={cn(EMPTY_STYLES.description, descriptionClassName)}>
-                  {description}
-                </p>
-            )}
+function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-title"
+      className={cn("text-lg font-medium tracking-tight", className)}
+      {...props}
+    />
+  )
+}
 
-            {actions && (
-                <div className={cn(EMPTY_STYLES.actions, actionsClassName)}>
-                  {actions}
-                </div>
-            )}
-          </div>
-      )
-    })
+function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <div
+      data-slot="empty-description"
+      className={cn(
+        "text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
+function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-content"
+      className={cn(
+        "flex w-full min-w-0 max-w-sm flex-col items-center gap-4 text-balance text-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+}

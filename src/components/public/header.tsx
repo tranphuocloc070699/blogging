@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ContactRound, Newspaper, UserRoundPen } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -16,35 +16,21 @@ export default function Header() {
         const pathname = usePathname();
         const router = useRouter();
         const [showHeader, setShowHeader] = useState(true);
-        const [lastScrollY, setLastScrollY] = useState(0);
+        const lastScrollYRef = useRef(0);
         const session = useClientSession();
-        const navItems = useMemo(() => {
-                const navItems = [
-                        { href: '/', label: 'Post', icon: Newspaper },
-                        // { href: '/book', label: 'Book', icon: BookOpenText },
-                        { href: '/about', label: 'About', icon: ContactRound },
-                ]
-                if (session?.user?.role === USER_ROLE.USER || session?.user?.role === USER_ROLE.ADMIN) {
-                        navItems.push({
+        const navItems = [
+                { href: '/', label: 'Post', icon: Newspaper },
+                { href: '/about', label: 'About', icon: ContactRound },
+                ...(session?.user?.role === USER_ROLE.USER || session?.user?.role === USER_ROLE.ADMIN
+                        ? [{
                                 href: "/auth",
                                 label: "Manager",
                                 icon: UserRoundPen
-                        })
-                }
+                        }]
+                        : []),
+        ];
 
-                return navItems
-
-
-        }, [session]);
-
-        const variant = useMemo(() => {
-                if (pathname.includes("posts/")) {
-                        return "back"
-                }
-                return "default";
-        }, [
-                pathname
-        ])
+        const variant = pathname.includes("posts/") ? "back" : "default";
 
         // Scroll detection for sticky header when variant is "back"
         useEffect(() => {
@@ -56,20 +42,20 @@ export default function Header() {
                 const handleScroll = () => {
                         const currentScrollY = window.scrollY;
 
-                        if (currentScrollY < lastScrollY) {
+                        if (currentScrollY < lastScrollYRef.current) {
                                 // Scrolling up
                                 setShowHeader(true);
-                        } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                        } else if (currentScrollY > lastScrollYRef.current && currentScrollY > 100) {
                                 // Scrolling down and past 100px
                                 setShowHeader(false);
                         }
 
-                        setLastScrollY(currentScrollY);
+                        lastScrollYRef.current = currentScrollY;
                 };
 
                 window.addEventListener('scroll', handleScroll, { passive: true });
                 return () => window.removeEventListener('scroll', handleScroll);
-        }, [variant, lastScrollY]);
+        }, [variant]);
 
         const handleBack = () => {
                 router.back();
