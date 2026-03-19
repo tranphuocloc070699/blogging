@@ -43,23 +43,30 @@ services:
     networks:
       - blog-network
 
+  migrate:
+    image: ghcr.io/${GITHUB_USERNAME}/blogging:latest
+    container_name: blog-migrate
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npx prisma migrate deploy --schema=prisma/schema/main.prisma
+    restart: "no"
+    networks:
+      - blog-network
+
   app:
     image: ghcr.io/${GITHUB_USERNAME}/blogging:latest
     container_name: blog-app
     env_file:
       - .env
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
-    command: >
-      sh -c "
-      echo 'Running Prisma migrations...' &&
-      npx prisma migrate deploy --schema=./prisma/schema/main.prisma &&
-      echo 'Starting Next.js app...' &&
-      npm run start
-      "
+    command: pnpm run start # ← clean, no migration here
     ports:
       - "127.0.0.1:3000:3000"
     restart: unless-stopped
