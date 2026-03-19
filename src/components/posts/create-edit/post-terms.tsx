@@ -10,6 +10,7 @@ import { Button } from "@/components/ui";
 import { TaxonomyDto, TermDto } from "@/types/posts";
 import taxonomyService from "@/services/modules/taxonomy-service";
 import termService from "@/services/modules/term-service";
+import { ApiRequestError } from "@/lib/app-error";
 
 
 interface PostTermsProps {
@@ -28,6 +29,7 @@ export default function PostTerms({ className }: PostTermsProps) {
   const [selectedTaxonomy, setSelectedTaxonomy] = useState<string>("");
   const [availableTerms, setAvailableTerms] = useState<TermDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const termIds = watch("termIds") || [];
   const selectedTerms = allTerms.filter((term) => termIds.includes(term.id));
@@ -43,8 +45,14 @@ export default function PostTerms({ className }: PostTermsProps) {
         console.log({ taxonomiesResponse, termsResponse });
         setTaxonomies(taxonomiesResponse.data || []);
         setAllTerms(termsResponse.data || []);
+        setLoadError(null);
       } catch (error) {
         console.error("Failed to load taxonomies and terms:", error);
+        setLoadError(
+          error instanceof ApiRequestError && error.code === "DATABASE_UNAVAILABLE"
+            ? "Taxonomies and terms are temporarily unavailable because the database cannot be reached."
+            : "Failed to load taxonomies and terms."
+        );
       } finally {
         setLoading(false);
       }
@@ -98,6 +106,10 @@ export default function PostTerms({ className }: PostTermsProps) {
       {loading ? (
         <div className="col-span-full text-sm text-gray-500">
           Loading taxonomies and terms...
+        </div>
+      ) : loadError ? (
+        <div className="col-span-full text-sm text-amber-700">
+          {loadError}
         </div>
       ) : (
         <>

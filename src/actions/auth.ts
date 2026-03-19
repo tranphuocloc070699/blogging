@@ -9,7 +9,6 @@ import {
   setRefreshTokenCookie,
   setAccessTokenCookie,
 } from "@/lib/auth.util";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 // Login Schema
@@ -21,7 +20,10 @@ const loginSchema = z.object({
 // Signup Schema
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Please enter a valid email").min(1, "Email is required"),
+  email: z
+    .string()
+    .email("Please enter a valid email")
+    .min(1, "Email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -56,7 +58,7 @@ export type SignupFormState = {
  */
 export async function loginAction(
   prevState: LoginFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<LoginFormState> {
   try {
     const email = formData.get("email") as string;
@@ -134,7 +136,7 @@ export async function loginAction(
  */
 export async function signupAction(
   prevState: SignupFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<SignupFormState> {
   try {
     const username = formData.get("username") as string;
@@ -142,7 +144,11 @@ export async function signupAction(
     const password = formData.get("password") as string;
 
     // Validate input
-    const validatedFields = signupSchema.safeParse({ username, email, password });
+    const validatedFields = signupSchema.safeParse({
+      username,
+      email,
+      password,
+    });
 
     if (!validatedFields.success) {
       return {

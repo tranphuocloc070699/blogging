@@ -7,6 +7,7 @@ import PageHeader from '@/components/page-header';
 import TermForm from '@/components/terms/term-form';
 import { TermDto } from '@/types/posts';
 import termService from '@/services/modules/term-service';
+import { ApiRequestError } from '@/lib/app-error';
 const pageHeader = {
   title: 'Edit Term',
   breadcrumb: [
@@ -28,6 +29,7 @@ export default function EditTermPage() {
   const params = useParams();
   const [term, setTerm] = useState<TermDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTerm = async () => {
@@ -35,8 +37,14 @@ export default function EditTermPage() {
         const id = parseInt(params["id"] as string);
         const { body } = await termService.getTermById(id);
         setTerm(body.data);
+        setLoadError(null);
       } catch (error) {
-        toast.error('Failed to load term');
+        const message = error instanceof ApiRequestError && error.code === 'DATABASE_UNAVAILABLE'
+          ? 'Term data is temporarily unavailable because the database cannot be reached.'
+          : 'Failed to load term';
+
+        toast.error(message);
+        setLoadError(message);
       } finally {
         setLoading(false);
       }
@@ -63,7 +71,7 @@ export default function EditTermPage() {
       <>
         <PageHeader title={pageHeader.title} breadcrumb={pageHeader.breadcrumb} />
         <div className="@container">
-          <div className="p-6 text-center text-red-600">Term not found</div>
+          <div className="p-6 text-center text-red-600">{loadError || 'Term not found'}</div>
         </div>
       </>
     );

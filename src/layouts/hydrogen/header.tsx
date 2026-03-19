@@ -1,9 +1,7 @@
-import HamburgerButton from '@/components/hamburger-button';
+import HamburgerButton from "@/components/hamburger-button";
 import HeaderMenuRight from "@/components/header-menu-right";
-import SearchWidget from "@/components/search/container";
 import Sidebar from "@/layouts/hydrogen/sidebar";
 import StickyHeader from "@/layouts/sticky-header";
-
 
 const Header = () => {
   return (
@@ -12,7 +10,6 @@ const Header = () => {
         <HamburgerButton
           view={<Sidebar className="static w-full 2xl:w-full" />}
         />
-        <SearchWidget />
       </div>
 
       <HeaderMenuRight />

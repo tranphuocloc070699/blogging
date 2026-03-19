@@ -6,10 +6,12 @@ import {
   errorResponse,
   conflictResponse,
   paginatedResponse,
-  serverErrorResponse
+  serverErrorResponse,
+  serviceUnavailableResponse
 } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
+import { isDatabaseUnavailableError } from '@/lib/app-error';
 
 // GET /api/terms - Get all terms with optional taxonomy filter
 export async function GET(request: NextRequest) {
@@ -94,6 +96,17 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Get terms error:', error);
+
+    if (isDatabaseUnavailableError(error)) {
+      return serviceUnavailableResponse(
+        'Terms are temporarily unavailable. Please try again later.',
+        {
+          code: 'DATABASE_UNAVAILABLE',
+          retryable: true,
+        }
+      );
+    }
+
     return serverErrorResponse('Failed to fetch terms');
   }
 }

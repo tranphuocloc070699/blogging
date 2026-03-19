@@ -14,7 +14,7 @@ export type ResponseDto<T> = {
   data: T;
   message: string;
   metadata?: PaginationMetadata;
-  errors?: string;
+  errors?: unknown;
 };
 
 export interface PaginationMetadata {

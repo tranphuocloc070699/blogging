@@ -1,14 +1,17 @@
-import { Metadata } from 'next';
-import BlogPostList from '@/components/public/blog-posts/blog-post-list';
-import BlogPostFilterBar from '@/components/public/blog-posts/blog-post-filter-bar';
-import BlogPostListSkeleton from '@/components/public/blog-posts/blog-post-list-skeleton';
-import postService from '@/services/modules/post-service';
-import { getAuthSession } from '@/action/auth.action';
-import { Suspense } from 'react';
+import { Metadata } from "next";
+import BlogPostList from "@/components/public/blog-posts/blog-post-list";
+import BlogPostFilterBar from "@/components/public/blog-posts/blog-post-filter-bar";
+import BlogPostListSkeleton from "@/components/public/blog-posts/blog-post-list-skeleton";
+import postService from "@/services/modules/post-service";
+import { getAuthSession } from "@/action/auth.action";
+import { Suspense } from "react";
+import { ApiRequestError } from "@/lib/app-error";
+import { ErrorMessage } from "@/components/error-message";
 
 export const metadata: Metadata = {
-  title: 'Home',
-  description: 'Explore articles about web development, React, and modern JavaScript',
+  title: "Home",
+  description:
+    "Explore articles about web development, React, and modern JavaScript",
 };
 
 interface HomePageProps {
@@ -27,28 +30,37 @@ interface BlogPostsProps {
 
 async function BlogPosts({ page, search, tag }: BlogPostsProps) {
   const session = await getAuthSession();
+
   const pageSize = 10;
   const totalPostsToFetch = page * pageSize;
 
-  const response = await postService.getPublishedPosts({
-    page: 1,
-    size: totalPostsToFetch,
-    search,
-    tag
-  }, session?.accessToken);
+  try {
+    const response = await postService.getPublishedPosts(
+      {
+        page: 1,
+        size: totalPostsToFetch,
+        search,
+        tag,
+      },
+      session?.accessToken,
+    );
 
-  const posts = response.body.data?.posts || [];
-  const hasMore = response.body.data?.hasMore || false;
-  const total = response.body.data?.total || 0;
+    const posts = response.body.data?.posts || [];
+    const hasMore = response.body.data?.hasMore || false;
+    const total = response.body.data?.total || 0;
 
-  return (
-    <BlogPostList
-      posts={posts}
-      hasMore={hasMore}
-      currentPage={page}
-      total={total}
-    />
-  );
+    return (
+      <BlogPostList
+        posts={posts}
+        hasMore={hasMore}
+        currentPage={page}
+        total={total}
+      />
+    );
+  } catch (error) {
+    console.log({ error });
+    return <ErrorMessage error={error} />;
+  }
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
@@ -58,7 +70,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-0">
       <BlogPostFilterBar />
-      <Suspense key={`${page}-${search}-${tag}`} fallback={<BlogPostListSkeleton />}>
+      <Suspense
+        key={`${page}-${search}-${tag}`}
+        fallback={<BlogPostListSkeleton />}
+      >
         <BlogPosts page={page} search={search} tag={tag} />
       </Suspense>
     </div>

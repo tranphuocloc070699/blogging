@@ -63,6 +63,10 @@ export function conflictResponse(message: string = 'Conflict'): NextResponse<Api
   return errorResponse(message, 409);
 }
 
+export function serviceUnavailableResponse(message: string = 'Service unavailable', errors?: any): NextResponse<ApiResponse> {
+  return errorResponse(message, 503, errors);
+}
+
 export function serverErrorResponse(message: string = 'Internal server error'): NextResponse<ApiResponse> {
   return errorResponse(message, 500);
 }

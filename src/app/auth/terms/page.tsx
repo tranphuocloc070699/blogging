@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import termService from '@/services/modules/term-service';
 import { useClientSession } from '@/hooks/use-client-session';
+import { ApiRequestError } from '@/lib/app-error';
 const pageHeader = {
   title: 'Terms',
   breadcrumb: [
@@ -25,6 +26,7 @@ const pageHeader = {
 export default function TermsPage() {
   const [terms, setTerms] = useState<TermDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const session = useClientSession();
   useEffect(() => {
     loadTerms();
@@ -34,9 +36,16 @@ export default function TermsPage() {
     try {
       const { body } = await termService.getAllTerms();
       setTerms(Array.isArray(body.data) ? body.data : []);
+      setLoadError(null);
     } catch (error) {
       console.error('Failed to load terms:', error);
-      toast.error('Failed to load terms');
+
+      const message = error instanceof ApiRequestError && error.code === 'DATABASE_UNAVAILABLE'
+        ? 'Terms are temporarily unavailable because the database cannot be reached.'
+        : 'Failed to load terms';
+
+      toast.error(message);
+      setLoadError(message);
       setTerms([]);
     } finally {
       setLoading(false);
@@ -72,6 +81,10 @@ export default function TermsPage() {
             <div className="rounded-lg border border-gray-200 bg-white">
               {loading ? (
                 <div className="p-6 text-center">Loading terms...</div>
+              ) : loadError ? (
+                <div className="p-6 text-center text-amber-700">
+                  {loadError}
+                </div>
               ) : terms.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   No terms found. Create your first term to get started.

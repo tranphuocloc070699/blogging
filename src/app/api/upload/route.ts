@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { uploadToMinio } from '@/lib/minio';
-import { verifyToken } from '@/lib/auth.util';
+import { NextRequest, NextResponse } from "next/server";
+import { uploadToMinio } from "@/lib/minio";
+import { verifyToken } from "@/lib/auth.util";
+import { USER_ROLE } from "@/config/enums";
+import { log } from "console";
 
 export async function POST(request: NextRequest) {
   try {
     // Get the authorization header
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("Authorization");
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: 'Unauthorized - No token provided' },
-        { status: 401 }
+        { error: "Unauthorized - No token provided" },
+        { status: 401 },
       );
     }
 
@@ -20,37 +22,40 @@ export async function POST(request: NextRequest) {
 
     if (!payload) {
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid token' },
-        { status: 401 }
+        { error: "Unauthorized - Invalid token" },
+        { status: 401 },
       );
     }
 
     // Check if user is admin
-    // if (payload.role !== USER_ROLE.ADMIN) {
-    //   return NextResponse.json(
-    //     { error: 'Forbidden - Only admins can upload images' },
-    //     { status: 403 }
-    //   );
-    // }
-
-    // Get the uploaded file
-    // console.log({ request }) 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-
-    if (!file) {
+    if (payload.role !== USER_ROLE.ADMIN) {
       return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
+        { error: "Forbidden - Only admins can upload images" },
+        { status: 403 },
       );
     }
 
+    // Get the uploaded file
+    // console.log({ request })
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only images are allowed.' },
-        { status: 400 }
+        { error: "Invalid file type. Only images are allowed." },
+        { status: 400 },
       );
     }
 
@@ -58,8 +63,8 @@ export async function POST(request: NextRequest) {
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
+        { error: "File too large. Maximum size is 5MB." },
+        { status: 400 },
       );
     }
 
@@ -78,10 +83,10 @@ export async function POST(request: NextRequest) {
       type: file.type,
     });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error("Upload error:", error);
     return NextResponse.json(
-      { error: 'Failed to upload image' },
-      { status: 500 }
+      { error: "Failed to upload image" },
+      { status: 500 },
     );
   }
 }

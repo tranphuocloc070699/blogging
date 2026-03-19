@@ -1,4 +1,5 @@
 // import "@/lib/envConfig"
+import { ApiRequestError, parseApiErrorPayload } from "@/lib/app-error";
 
 interface HttpRequest {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -78,14 +79,24 @@ class HttpFactory {
     };
 
     const response = await fetch(finalUrl, options);
+    const contentType = response.headers.get("content-type");
+    const data = contentType?.includes("json")
+      ? await response.json()
+      : await response.text();
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+      const payload = parseApiErrorPayload(data);
 
-    let data: T;
-    const contentType = response.headers.get("content-type");
-    data = contentType?.includes("json") ? await response.json() : await response.text();
+      throw new ApiRequestError(
+        payload?.message || `HTTP ${response.status}: ${response.statusText}`,
+        {
+          status: response.status,
+          code: payload?.errors?.code,
+          retryable: payload?.errors?.retryable,
+          details: data,
+        }
+      );
+    }
 
     return { headers: response.headers, body: data };
   }

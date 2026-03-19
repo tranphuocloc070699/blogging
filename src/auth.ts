@@ -4,15 +4,18 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { USER_ROLE } from "@/config/enums";
 import userService from "@/services/modules/user-service";
-import "@/lib/envConfig"
+import "@/lib/envConfig";
 
 async function refreshAccessToken(token: any) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken: token.refreshToken }),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/users`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: token.refreshToken }),
+      },
+    );
 
     const refreshedTokens = await response.json();
 
@@ -22,7 +25,8 @@ async function refreshAccessToken(token: any) {
       ...token,
       accessToken: refreshedTokens.data.accessToken,
       refreshToken: refreshedTokens.data.refreshToken ?? token.refreshToken,
-      accessTokenExpires: Date.now() + (refreshedTokens.data.expiresIn || 3600) * 1000,
+      accessTokenExpires:
+        Date.now() + (refreshedTokens.data.expiresIn || 3600) * 1000,
     };
   } catch (error) {
     console.error("RefreshAccessTokenError:", error);
@@ -56,7 +60,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const refreshToken = response?.body?.data?.refreshToken;
 
           if (!userData || !accessToken || !refreshToken) return null;
-          if (!userData.id || !userData.email || !userData.username || !userData.role) {
+          if (
+            !userData.id ||
+            !userData.email ||
+            !userData.username ||
+            !userData.role
+          ) {
             return null;
           }
 
@@ -65,7 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: userData.email,
             name: userData.username,
             username: userData.username,
-            role: userData.role as typeof USER_ROLE[keyof typeof USER_ROLE],
+            role: userData.role as (typeof USER_ROLE)[keyof typeof USER_ROLE],
             accessToken,
             refreshToken,
           };
@@ -93,12 +102,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
-          accessTokenExpires: Date.now() + (parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || "3600") * 1000),
+          accessTokenExpires:
+            Date.now() +
+            parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || "3600") * 1000,
         };
       }
 
       // If access token still valid
-      if (token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+      if (
+        token.accessTokenExpires &&
+        Date.now() < (token.accessTokenExpires as number)
+      ) {
         return token;
       }
 
@@ -109,7 +123,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.username = token.username as string;
-      session.user.role = token.role as typeof USER_ROLE[keyof typeof USER_ROLE];
+      session.user.role =
+        token.role as (typeof USER_ROLE)[keyof typeof USER_ROLE];
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       session.accessTokenExpires = token.accessTokenExpires as number;
