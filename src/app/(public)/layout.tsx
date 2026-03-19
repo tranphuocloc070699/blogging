@@ -1,7 +1,6 @@
-import { Metadata } from 'next';
-import QueryProvider from '@/components/provider/query-provider';
-import Header from '@/components/public/header';
-import Script from 'next/script';
+import { Metadata } from "next";
+import Header from "@/components/public/header";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: {
@@ -29,7 +28,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <QueryProvider>
+    <>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
         strategy="afterInteractive"
@@ -46,6 +45,6 @@ export default function PublicLayout({
         <Header />
         <main>{children}</main>
       </div>
-    </QueryProvider>
+    </>
   );
 }

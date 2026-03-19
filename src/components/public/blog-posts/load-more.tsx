@@ -1,40 +1,23 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface LoadMoreProps {
   currentPage: number;
+  isPending: boolean;
+  onLoadMore: () => void;
 }
 
-export default function LoadMore({ currentPage }: LoadMoreProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-
-  const loadMore = () => {
-    const nextPage = currentPage + 1;
-
-    // Create new URL search params
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', nextPage.toString());
-
-    // Navigate to the new page with transition
-    startTransition(() => {
-      router.push(`/?${params.toString()}`, { scroll: false });
-    });
-  };
-
+export default function LoadMore({ currentPage, isPending, onLoadMore }: LoadMoreProps) {
   return (
     <div className="flex items-center justify-center my-8">
       <Button
-        onClick={loadMore}
+        onClick={onLoadMore}
         disabled={isPending}
         variant="outline"
         size="sm"
-        className="text-sm"
+        className="text-sm min-w-32"
       >
         {isPending ? (
           <>
@@ -42,7 +25,7 @@ export default function LoadMore({ currentPage }: LoadMoreProps) {
             Loading...
           </>
         ) : (
-          'Load More'
+          `Load More ${currentPage + 1}`
         )}
       </Button>
     </div>

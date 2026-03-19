@@ -5,9 +5,9 @@ import NovelEditorWrapper from '@/components/posts/novel-editor-wrapper';
 import BlogPostTags from '@/components/public/blog-posts/blog-post-tags';
 import BlogPostBreadcrumb from '@/components/public/blog-posts/blog-post-breadcrumb';
 import BlogPostAction from '@/components/public/blog-posts/blog-post-action';
-import postService from '@/services/modules/post-service';
 import { notFound } from 'next/navigation';
-import { getAuthSession } from '@/action/auth.action';
+import { auth } from '@/auth';
+import { getPublishedPostBySlug } from '@/lib/public-posts';
 
 interface PageProps {
   params: {
@@ -19,9 +19,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const res = await postService.getPostBySlug(slug);
-
-    const post = res.body.data as PostDto;
+    const post = await getPublishedPostBySlug(slug);
     if (!post) {
       return {
         title: 'Post Not Found',
@@ -56,17 +54,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PostDetailPage({ params }: PageProps) {
-  const session = await getAuthSession();
-  console.log({ session })
+  const session = await auth();
   let post: PostDto | null = null;
 
   try {
     const { slug } = await params;
-    const res = await postService.getPostBySlug(slug, session?.accessToken);
-    post = res.body.data as PostDto;
-
-  } catch (error) {
-    console.log({ error })
+    post = await getPublishedPostBySlug(slug, session?.user?.id);
+  } catch {
     notFound();
   }
 

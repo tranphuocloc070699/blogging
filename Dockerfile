@@ -1,5 +1,5 @@
 # Simple & bulletproof Dockerfile – no standalone nonsense
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install libc (needed by Prisma on Alpine)
 RUN apk add --no-cache libc6-compat

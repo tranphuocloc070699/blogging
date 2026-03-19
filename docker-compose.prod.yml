@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -9,7 +9,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blog-user} -d ${POSTGRES_DB:-blog}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-blog-user} -d ${POSTGRES_DB:-blog}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -52,9 +56,7 @@ services:
     command: >
       sh -c "
       echo 'Running Prisma migrations...' &&
-      npx prisma migrate deploy &&
-      echo 'Generating Prisma client...' &&
-      npx prisma generate &&
+      npx prisma migrate deploy --schema=./prisma/schema/main.prisma &&
       echo 'Starting Next.js app...' &&
       npm run start
       "

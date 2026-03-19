@@ -2,11 +2,9 @@ import { Metadata } from "next";
 import BlogPostList from "@/components/public/blog-posts/blog-post-list";
 import BlogPostFilterBar from "@/components/public/blog-posts/blog-post-filter-bar";
 import BlogPostListSkeleton from "@/components/public/blog-posts/blog-post-list-skeleton";
-import postService from "@/services/modules/post-service";
-import { getAuthSession } from "@/action/auth.action";
 import { Suspense } from "react";
-import { ApiRequestError } from "@/lib/app-error";
 import { ErrorMessage } from "@/components/error-message";
+import { getPublishedPostsPage, PUBLIC_POSTS_PAGE_SIZE } from "@/lib/public-posts";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -29,43 +27,28 @@ interface BlogPostsProps {
 }
 
 async function BlogPosts({ page, search, tag }: BlogPostsProps) {
-  const session = await getAuthSession();
-
-  const pageSize = 10;
-  const totalPostsToFetch = page * pageSize;
-
   try {
-    const response = await postService.getPublishedPosts(
-      {
-        page: 1,
-        size: totalPostsToFetch,
-        search,
-        tag,
-      },
-      session?.accessToken,
-    );
-
-    const posts = response.body.data?.posts || [];
-    const hasMore = response.body.data?.hasMore || false;
-    const total = response.body.data?.total || 0;
+    const response = await getPublishedPostsPage(1, search, tag, PUBLIC_POSTS_PAGE_SIZE);
 
     return (
       <BlogPostList
-        posts={posts}
-        hasMore={hasMore}
+        posts={response.posts}
+        hasMore={response.hasMore}
         currentPage={page}
-        total={total}
+        total={response.total}
+        search={search}
+        tag={tag}
       />
     );
   } catch (error) {
-    console.log({ error });
     return <ErrorMessage error={error} />;
   }
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { page: pageParam, search, tag } = await searchParams;
-  const page = pageParam ? parseInt(pageParam) : 1;
+  const parsedPage = pageParam ? Number.parseInt(pageParam, 10) : 1;
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-0">
