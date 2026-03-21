@@ -4,21 +4,19 @@ import React from "react";
 
 
 interface ModalProps {
-  view?: React.ReactNode;
-  containerClassName?: string;
-  isOpen?: boolean;
-  hideCloseButton?: boolean;
+  view: React.ReactNode | null;
+  containerClassName: string;
+  isOpen: boolean;
+  hideCloseButton: boolean;
   openModal: (props: Pick<ModalProps, "view" | "containerClassName" | "hideCloseButton">) => void;
   closeModal: () => void;
 }
 
 export const useModal = create<ModalProps>((set) => ({
-  props: {
-    isOpen: false,
-    view: null,
-    containerClassName: "",
-    hideCloseButton: false
-  },
+  isOpen: false,
+  view: null,
+  containerClassName: "",
+  hideCloseButton: false,
   openModal: ({view, containerClassName, hideCloseButton}) =>
       set({isOpen: true, view, containerClassName, hideCloseButton}),
   closeModal: () =>

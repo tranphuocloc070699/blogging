@@ -16,6 +16,8 @@ export default function Header() {
   const router = useRouter();
   const [showHeader, setShowHeader] = useState(true);
   const lastScrollYRef = useRef(0);
+  const showHeaderRef = useRef(true);
+  const rafRef = useRef<number | null>(null);
   const session = useClientSession();
   const navItems = [
     { href: "/", label: "Post", icon: Newspaper },
@@ -37,28 +39,36 @@ export default function Header() {
   useEffect(() => {
     if (variant !== "back") {
       setShowHeader(true);
+      showHeaderRef.current = true;
       return;
     }
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (rafRef.current != null) return;
 
-      if (currentScrollY < lastScrollYRef.current) {
-        // Scrolling up
-        setShowHeader(true);
-      } else if (
-        currentScrollY > lastScrollYRef.current &&
-        currentScrollY > 100
-      ) {
-        // Scrolling down and past 100px
-        setShowHeader(false);
-      }
+      rafRef.current = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const shouldShow =
+          currentScrollY < lastScrollYRef.current ||
+          (currentScrollY <= 100 && showHeaderRef.current);
 
-      lastScrollYRef.current = currentScrollY;
+        if (shouldShow !== showHeaderRef.current) {
+          showHeaderRef.current = shouldShow;
+          setShowHeader(shouldShow);
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        rafRef.current = null;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current != null) {
+        window.cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, [variant]);
 
   const handleBack = () => {

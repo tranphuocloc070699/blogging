@@ -23,7 +23,7 @@ export default function Logo({ variant = 'default', onBack }: LogoProps) {
 
         return (
                 <Link href="/" className="text-stone-600 font-bold font-mono  md:text-lg text-base hover:text-gray-900 transition-colors flex items-center">
-                                <Image  src={"/logo.svg"} alt="logo" width={80} height={40} />
+                                <Image src={"/logo.svg"} alt="logo" width={80} height={40} priority loading="eager" />
                 </Link>
         );
 }

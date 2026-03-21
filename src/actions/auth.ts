@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { withMonitoredServerAction } from "@/lib/sentry-monitoring";
 import {
   verifyPassword,
   hashPassword,
@@ -57,10 +58,11 @@ export type SignupFormState = {
  * Server action for user login
  */
 export async function loginAction(
-  prevState: LoginFormState,
+  _prevState: LoginFormState,
   formData: FormData,
 ): Promise<LoginFormState> {
-  try {
+  return withMonitoredServerAction("auth.loginAction", async () => {
+    try {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
@@ -129,16 +131,18 @@ export async function loginAction(
       },
     };
   }
+  });
 }
 
 /**
  * Server action for user signup
  */
 export async function signupAction(
-  prevState: SignupFormState,
+  _prevState: SignupFormState,
   formData: FormData,
 ): Promise<SignupFormState> {
-  try {
+  return withMonitoredServerAction("auth.signupAction", async () => {
+    try {
     const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -206,4 +210,5 @@ export async function signupAction(
       },
     };
   }
+  });
 }

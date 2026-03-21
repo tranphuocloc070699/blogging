@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface LogoProps {
   iconOnly?: boolean;
@@ -23,8 +23,11 @@ const Logo = ({ className }: LogoProps) => {
   }
 
   return (
-    <img className={cn(className)} alt={"Logo"}
-      src={theme === "dark" ? "/light-logo.svg" : "/logo.svg"} />
+    <img
+      className={cn(className)}
+      alt={"Logo"}
+      src={theme === "dark" ? "/light-logo.svg" : "/logo.svg"}
+    />
   );
 };
 

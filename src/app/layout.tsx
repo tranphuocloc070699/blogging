@@ -6,6 +6,7 @@ import ThemeProvider from "@/components/provider/theme-provider";
 import GlobalModal from "@/components/modal-views/container";
 import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
+import PrismaHealthCheck from "@/components/health/prisma-health-check";
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -24,7 +25,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <SessionProvider>
+          <SessionProvider
+            refetchInterval={0}
+            refetchOnWindowFocus={false}
+            refetchWhenOffline={false}
+          >
+            <PrismaHealthCheck />
             {children}
             <GlobalModal />
             <Toaster position="top-right" />

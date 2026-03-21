@@ -1,9 +1,10 @@
-import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
 import { NextRequest } from 'next/server';
 import { HEADER_AUTHORIZATION } from '@/config/enums';
 import { getUserFromAuthHeader } from '@/lib/auth.util';
+import { postServerService } from '@/services/modules/post-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 // GET /api/posts/slug/:slug - Get published post by slug
 export async function GET(
@@ -16,82 +17,31 @@ export async function GET(
   try {
     const userId = user?.userId;
 
-    const post = await prisma.post.findFirst({
-      where: {
-        slug: slug,
-        status: 'PUBLISHED',
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
-        },
-        postTerms: {
-          include: {
-            term: {
-              include: {
-                taxonomy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            views: true,
-          },
-        },
-      },
-    });
+    const post = await postServerService.getPostBySlug(slug, userId);
 
     if (!post) {
       return notFoundResponse('Post not found');
     }
 
-    // Check if the current user has liked this post
-    let isLiked = false;
-    if (userId) {
-
-      const like = await prisma.postLike.findUnique({
-        where: {
-          postId_userId: {
-            postId: post.id,
-            userId: userId,
-          },
-        },
-      });
-      // console.log({ like })
-      isLiked = !!like;
-    }
-
     // Format the response
     const formattedPost = {
       ...serializeBigInt(post),
-      terms: post.postTerms.map(pt => ({
-        ...serializeBigInt(pt.term),
-        taxonomy: serializeBigInt(pt.term.taxonomy),
+      terms: post.terms.map(term => ({
+        ...serializeBigInt(term),
+        taxonomy: serializeBigInt(term.taxonomy),
       })),
-      likesCount: post._count.likes,
-      viewsCount: post._count.views,
-      isLiked,
+      likesCount: post.likesCount,
+      viewsCount: post.viewsCount,
+      isLiked: post.isLiked,
     };
 
-    // Remove postTerms and _count from response
     delete (formattedPost as any).postTerms;
     delete (formattedPost as any)._count;
 
     return successResponse(formattedPost);
   } catch (error) {
     console.error('Get post by slug error:', error);
+    captureApiRouteError(error, { method: "GET", route: "/api/posts/slug/[slug]" });
     return errorResponse('Failed to fetch post', 500);
   }
 }

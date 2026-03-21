@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse, conflictResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
 import { isDatabaseUnavailableError } from '@/lib/app-error';
 import { serviceUnavailableResponse } from '@/lib/response';
+import { termServerService } from '@/services/modules/term-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 // GET /api/terms/:id - Get term by ID
 export async function GET(
@@ -13,21 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const term = await prisma.term.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        taxonomy: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        _count: {
-          select: { postTerms: true },
-        },
-      },
-    });
+    const term = await termServerService.getTermById(parseInt(id));
 
     if (!term) {
       return notFoundResponse('Term not found');
@@ -40,6 +27,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Get term error:', error);
+    captureApiRouteError(error, { method: "GET", route: "/api/terms/[id]" });
 
     if (isDatabaseUnavailableError(error)) {
       return serviceUnavailableResponse(
@@ -67,74 +55,28 @@ export async function PUT(
     const body = await request.json();
     const { name, slug, description, taxonomyId } = body;
 
-    // Check if term exists
-    const existing = await prisma.term.findUnique({
-      where: { id: parseInt(id) },
+    const { error, data: term } = await termServerService.updateTerm(parseInt(id), {
+      name,
+      slug,
+      description,
+      taxonomyId: taxonomyId ? parseInt(taxonomyId) : undefined,
     });
 
-    if (!existing) {
+    if (error === "NOT_FOUND") {
       return notFoundResponse('Term not found');
     }
 
-    // Check if new taxonomy exists (if changing taxonomy)
-    if (taxonomyId && parseInt(taxonomyId) !== existing.taxonomyId) {
-      const taxonomy = await prisma.taxonomy.findUnique({
-        where: { id: parseInt(taxonomyId) },
-      });
-
-      if (!taxonomy) {
-        return errorResponse('Taxonomy not found', 404);
-      }
+    if (error === "TAXONOMY_NOT_FOUND") {
+      return errorResponse('Taxonomy not found', 404);
     }
 
-    // Generate slug if name is provided but slug is not
-    const termSlug = slug || (name ? name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : existing.slug);
-    const targetTaxonomyId = taxonomyId ? parseInt(taxonomyId) : existing.taxonomyId;
-
-    // Check for duplicates in the target taxonomy (excluding current term)
-    if (name || slug) {
-      const duplicate = await prisma.term.findFirst({
-        where: {
-          AND: [
-            { id: { not: parseInt(id) } },
-            { taxonomyId: targetTaxonomyId },
-            {
-              OR: [
-                ...(name ? [{ name: { equals: name, mode: 'insensitive' as const } }] : []),
-                ...(termSlug ? [{ slug: { equals: termSlug, mode: 'insensitive' as const } }] : []),
-              ],
-            },
-          ],
-        },
-      });
-
-      if (duplicate) {
-        return conflictResponse('A term with this name or slug already exists in this taxonomy');
-      }
+    if (error === "DUPLICATE") {
+      return conflictResponse('A term with this name or slug already exists in this taxonomy');
     }
 
-    // Update term
-    const term = await prisma.term.update({
-      where: { id: parseInt(id) },
-      data: {
-        ...(name && { name }),
-        ...(termSlug && { slug: termSlug }),
-        ...(description !== undefined && { description }),
-        ...(taxonomyId && { taxonomyId: parseInt(taxonomyId) }),
-      },
-      include: {
-        taxonomy: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        _count: {
-          select: { postTerms: true },
-        },
-      },
-    });
+    if (!term) {
+      return errorResponse('Failed to update term', 500);
+    }
 
     const { _count, ...rest } = term;
     return successResponse({
@@ -147,6 +89,7 @@ export async function PUT(
       return error;
     }
     console.error('Update term error:', error);
+    captureApiRouteError(error, { method: "PUT", route: "/api/terms/[id]" });
 
     if (error.code === 'P2002') {
       return conflictResponse('A term with this name or slug already exists in this taxonomy');
@@ -164,29 +107,14 @@ export async function DELETE(
   try {
     await requireAdmin(request);
     const { id } = await params;
-    // Check if term exists
-    const term = await prisma.term.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        _count: {
-          select: { postTerms: true },
-        },
-      },
-    });
-
-    if (!term) {
+    const { error } = await termServerService.deleteTerm(parseInt(id));
+    if (error === "NOT_FOUND") {
       return notFoundResponse('Term not found');
     }
 
-    // Check if term is used in posts
-    if (term._count.postTerms > 0) {
+    if (error === "IN_USE") {
       return errorResponse('Cannot delete term that is used in posts', 400);
     }
-
-    // Delete term
-    await prisma.term.delete({
-      where: { id: parseInt(id) },
-    });
 
     return successResponse(null, 'Term deleted successfully');
   } catch (error) {
@@ -195,6 +123,7 @@ export async function DELETE(
       return error;
     }
     console.error('Delete term error:', error);
+    captureApiRouteError(error, { method: "DELETE", route: "/api/terms/[id]" });
     return errorResponse('Failed to delete term', 500);
   }
 }

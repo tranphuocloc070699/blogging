@@ -1,60 +1,28 @@
-import prisma from '@/lib/prisma';
+import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
+import { postServerService } from '@/services/modules/post-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // PATCH /api/posts/[id]/unpublish - Unpublish a post (Admin only)
-export async function PATCH( { params }: RouteParams) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    await requireAdmin();
+    await requireAdmin(request);
 
     const { id } = await params;
     const postId = parseInt(id);
 
-    // Check if post exists
-    const existingPost = await prisma.post.findUnique({
-      where: { id: postId },
-    });
-
-    if (!existingPost) {
+    const { error, data: post } = await postServerService.unpublishPost(postId);
+    if (error === "NOT_FOUND") {
       return notFoundResponse('Post not found');
     }
-
-    // Unpublish post
-    const post = await prisma.post.update({
-      where: { id: postId },
-      data: {
-        status: 'DRAFT',
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            role: true,
-          },
-        },
-        postTerms: {
-          include: {
-            term: {
-              include: {
-                taxonomy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    if (!post) {
+      return errorResponse('Failed to unpublish post', 500);
+    }
 
     // Convert to number for JSON serialization
     const postResponse = {
@@ -87,6 +55,7 @@ export async function PATCH( { params }: RouteParams) {
       return error;
     }
     console.error('Unpublish post error:', error);
+    captureApiRouteError(error, { method: "PATCH", route: "/api/posts/[id]/unpublish" });
     return errorResponse('Failed to unpublish post', 500);
   }
 }

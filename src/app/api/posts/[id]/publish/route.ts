@@ -1,61 +1,28 @@
-import prisma from '@/lib/prisma';
+import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, notFoundResponse } from '@/lib/response';
+import { postServerService } from '@/services/modules/post-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // PATCH /api/posts/[id]/publish - Publish a post (Admin only)
-export async function PATCH({ params }: RouteParams) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    await requireAdmin();
+    await requireAdmin(request);
 
     const { id } = await params;
     const postId = parseInt(id);
 
-    // Check if post exists
-    const existingPost = await prisma.post.findUnique({
-      where: { id: postId },
-    });
-
-    if (!existingPost) {
+    const { error, data: post } = await postServerService.publishPost(postId);
+    if (error === "NOT_FOUND") {
       return notFoundResponse('Post not found');
     }
-
-    // Publish post
-    const post = await prisma.post.update({
-      where: { id: postId },
-      data: {
-        status: 'PUBLISHED',
-        publishedAt: existingPost.publishedAt || new Date(),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            role: true,
-          },
-        },
-        postTerms: {
-          include: {
-            term: {
-              include: {
-                taxonomy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    if (!post) {
+      return errorResponse('Failed to publish post', 500);
+    }
 
     // Convert to number for JSON serialization
     const postResponse = {
@@ -88,6 +55,7 @@ export async function PATCH({ params }: RouteParams) {
       return error;
     }
     console.error('Publish post error:', error);
+    captureApiRouteError(error, { method: "PATCH", route: "/api/posts/[id]/publish" });
     return errorResponse('Failed to publish post', 500);
   }
 }

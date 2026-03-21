@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
 import {
   EditorRoot,
   EditorContent,
@@ -9,12 +9,16 @@ import {
   EditorCommandItem,
   EditorCommandEmpty,
   EditorCommandList,
-  handleCommandNavigation
-} from 'novel';
-import { defaultExtensions, slashCommand, suggestionItems } from './novel-extensions';
-import { cn } from '@/lib/utils';
-import { useClientSession } from '@/hooks/use-client-session';
-import { useUserStore } from '@/store/user.store';
+  handleCommandNavigation,
+} from "novel";
+import {
+  defaultExtensions,
+  slashCommand,
+  suggestionItems,
+} from "./novel-extensions";
+import { cn } from "@/lib/utils";
+import { useClientSession } from "@/hooks/use-client-session";
+import { useUserStore } from "@/store/user.store";
 
 interface NovelEditorWrapperProps {
   value: string;
@@ -27,13 +31,15 @@ export default function NovelEditorWrapper({
   value,
   onChange,
   className,
-  readOnly = false
+  readOnly = false,
 }: NovelEditorWrapperProps) {
   const [mounted, setMounted] = useState(false);
-  const [initialContent, setInitialContent] = useState<JSONContent | undefined>(undefined);
+  const [initialContent, setInitialContent] = useState<JSONContent | undefined>(
+    undefined,
+  );
   const [editorKey, setEditorKey] = useState(0);
   const isInternalChange = useRef(false);
-  const lastExternalValue = useRef('');
+  const lastExternalValue = useRef("");
   const userStore = useUserStore();
 
   const session = useClientSession();
@@ -42,7 +48,7 @@ export default function NovelEditorWrapper({
     if (session?.accessToken) {
       userStore.setAccessToken(session.accessToken);
     }
-  }, [session])
+  }, [session]);
 
   useEffect(() => {
     setMounted(true);
@@ -67,29 +73,36 @@ export default function NovelEditorWrapper({
       if (value) {
         const parsed = JSON.parse(value);
         setInitialContent(parsed);
-        setEditorKey(prev => prev + 1); // Force re-mount only on external changes
+        setEditorKey((prev) => prev + 1); // Force re-mount only on external changes
       } else {
         setInitialContent(undefined);
-        setEditorKey(prev => prev + 1);
+        setEditorKey((prev) => prev + 1);
       }
     } catch {
       // If value is markdown or plain text, create a basic document structure
       setInitialContent({
-        type: 'doc',
-        content: value ? [
-          {
-            type: 'paragraph',
-            content: [{ type: 'text', text: value }]
-          }
-        ] : []
+        type: "doc",
+        content: value
+          ? [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: value }],
+              },
+            ]
+          : [],
       });
-      setEditorKey(prev => prev + 1);
+      setEditorKey((prev) => prev + 1);
     }
   }, [value]);
 
   if (!mounted) {
     return (
-      <div className={cn("min-h-[500px] w-full rounded-lg border border-gray-200 bg-white p-4", className)}>
+      <div
+        className={cn(
+          "min-h-[500px] w-full rounded-lg border border-gray-200 bg-white p-4",
+          className,
+        )}
+      >
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-1/3 rounded bg-gray-200"></div>
           <div className="h-4 w-full rounded bg-gray-200"></div>
@@ -104,27 +117,33 @@ export default function NovelEditorWrapper({
     <div className={cn("w-full", readOnly && "select-text", className)}>
       <EditorRoot key={editorKey}>
         <EditorContent
+          immediatelyRender={false}
           initialContent={initialContent}
-          extensions={readOnly ? defaultExtensions as any : [...defaultExtensions, slashCommand] as any}
+          extensions={
+            readOnly
+              ? (defaultExtensions as any)
+              : ([...defaultExtensions, slashCommand] as any)
+          }
           className={cn(
             "min-h-full w-full editor-wrapper",
-            readOnly && "[&_.ProseMirror]:pointer-events-auto [&_a]:pointer-events-auto [&_a]:cursor-pointer",
-            className
+            readOnly &&
+              "[&_.ProseMirror]:pointer-events-auto [&_a]:pointer-events-auto [&_a]:cursor-pointer",
+            className,
           )}
           editorProps={{
             editable: () => !readOnly,
             attributes: {
               class: cn(
-                'prose prose-lg dark:prose-invert focus:outline-none max-w-full min-h-full px-0 py-4',
-                readOnly ? 'cursor-text select-text' : ''
-              )
+                "prose prose-lg dark:prose-invert focus:outline-none max-w-full min-h-full px-0 py-4",
+                readOnly ? "cursor-text select-text" : "",
+              ),
             },
             handleDOMEvents: {
               keydown: (_view, event) => {
                 if (readOnly) return false;
                 return handleCommandNavigation(event);
               },
-            }
+            },
           }}
           onUpdate={({ editor }) => {
             if (readOnly) return;
@@ -137,7 +156,9 @@ export default function NovelEditorWrapper({
         >
           {!readOnly && (
             <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-lg border border-gray-200 bg-white px-1 py-2 shadow-lg transition-all editor-command-list-scrollbar">
-              <EditorCommandEmpty className="px-2 py-2 text-sm text-gray-500">No results</EditorCommandEmpty>
+              <EditorCommandEmpty className="px-2 py-2 text-sm text-gray-500">
+                No results
+              </EditorCommandEmpty>
               <EditorCommandList className="editor-command-list-scrollbar">
                 {suggestionItems.map((item) => (
                   <EditorCommandItem
@@ -154,8 +175,12 @@ export default function NovelEditorWrapper({
                       {item.icon}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 mb-0">{item.title}</p>
-                      <p className="text-xs text-gray-500 mt-0 leading-relaxed">{item.description}</p>
+                      <p className="font-medium text-gray-900 mb-0">
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0 leading-relaxed">
+                        {item.description}
+                      </p>
                     </div>
                   </EditorCommandItem>
                 ))}

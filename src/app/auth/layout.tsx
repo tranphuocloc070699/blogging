@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/action/auth.action";
+import { requireAdmin } from "@/actions/auth.action";
 import { LayoutProps } from "@/config/props";
 import HydrogenLayout from "@/layouts/hydrogen/layout";
 const Layout = async ({ children }: LayoutProps) => {
