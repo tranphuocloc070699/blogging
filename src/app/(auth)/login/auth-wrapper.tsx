@@ -63,7 +63,7 @@ function AuthHeader() {
   return (
     <header className="flex items-center justify-between p-4 lg:px-16 lg:py-6 2xl:px-24">
       <Link href={"/"} className="flex items-center space-x-2">
-        <Image alt="logo" src="/logo.svg" width={120} height={40} />
+        <Image alt="logo" src="/logo.svg" width={120} height={40} priority loading="eager" />
       </Link>
       <div className="flex items-center space-x-2 md:space-x-4">
         <Link

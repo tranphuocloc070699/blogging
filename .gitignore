@@ -53,3 +53,10 @@ AGENTS.md
 .claude
 docs/
 infras/
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+.agents/
+skills-lock.json
+pnpm-lock.yaml

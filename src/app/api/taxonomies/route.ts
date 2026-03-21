@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, conflictResponse, paginatedResponse } from '@/lib/response';
 import { serializeBigInt } from '@/lib/api-utils';
-import { Prisma } from '@prisma/client';
+import { taxonomyServerService } from '@/services/modules/taxonomy-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 /**
  * @swagger
@@ -78,28 +78,12 @@ export async function GET(request: NextRequest) {
     const sortDir = searchParams.get('sortDir') || 'asc';
     const search = searchParams.get('search');
 
-    // Build where clause
-    const where: Prisma.TaxonomyWhereInput = {};
-
-    if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
-    }
-
-    // Get total count
-    const totalElements = await prisma.taxonomy.count({ where });
-
-    // Get taxonomies
-    const taxonomies = await prisma.taxonomy.findMany({
-      where,
-      skip: page * size,
-      take: size,
-      orderBy: { [sortBy]: sortDir },
-      include: {
-        _count: {
-          select: { terms: true },
-        },
-        terms: true
-      },
+    const { totalElements, taxonomies } = await taxonomyServerService.getTaxonomies({
+      page,
+      size,
+      sortBy,
+      sortDir: sortDir as "asc" | "desc",
+      search: search ?? undefined,
     });
 
     // Format response - Convert BigInt to number and extract term count
@@ -127,6 +111,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Get taxonomies error:', error);
+    captureApiRouteError(error, { method: "GET", route: "/api/taxonomies" });
     return errorResponse('Failed to fetch taxonomies', 500);
   }
 }
@@ -211,36 +196,19 @@ export async function POST(request: NextRequest) {
       return errorResponse('Name is required');
     }
 
-    // Generate slug if not provided
-    const taxonomySlug = slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-    // Check if taxonomy already exists (case-insensitive)
-    const existing = await prisma.taxonomy.findFirst({
-      where: {
-        OR: [
-          { name: { equals: name, mode: 'insensitive' } },
-          { slug: { equals: taxonomySlug, mode: 'insensitive' } },
-        ],
-      },
+    const { error, data: taxonomy } = await taxonomyServerService.createTaxonomy({
+      name,
+      slug,
+      description,
     });
 
-    if (existing) {
+    if (error === "DUPLICATE") {
       return conflictResponse('Taxonomy with this name or slug already exists');
     }
 
-    // Create taxonomy
-    const taxonomy = await prisma.taxonomy.create({
-      data: {
-        name,
-        slug: taxonomySlug,
-        description,
-      },
-      include: {
-        _count: {
-          select: { terms: true },
-        },
-      },
-    });
+    if (!taxonomy) {
+      return errorResponse('Failed to create taxonomy', 500);
+    }
 
     const { _count, ...rest } = taxonomy;
     return successResponse(
@@ -257,6 +225,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     console.error('Create taxonomy error:', error);
+    captureApiRouteError(error, { method: "POST", route: "/api/taxonomies" });
 
     // Handle Prisma unique constraint errors
     if (error.code === 'P2002') {

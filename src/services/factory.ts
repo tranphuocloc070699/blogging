@@ -27,17 +27,16 @@ const buildUrl = (url: string, params?: Record<string, any>): string => {
   return query ? `${url}?${query}` : url;
 };
 
-
 const getAbsoluteUrl = (url: string): string => {
   if (typeof window !== "undefined" || !url.startsWith("/")) return url;
 
-  const base = process.env.NEXT_PUBLIC_API_URL ?? process.env.BACKEND_DOMAIN;
+  const base = process.env.NEXT_PUBLIC_API_URL;
   return `${base}${url}`;
 };
 
 const buildHeaders = (
   accessToken?: string | null,
-  body?: object | FormData
+  body?: object | FormData,
 ): Headers => {
   const headers = new Headers();
 
@@ -56,9 +55,20 @@ const buildBody = (body?: object | FormData) => {
   if (!body) return undefined;
   if (body instanceof FormData) return body;
   return JSON.stringify(body);
-}
+};
 
 class HttpFactory {
+  private readonly MAX_RETRIES = 3;
+  private readonly REQUEST_TIMEOUT_MS = 5000;
+
+  private isRetryableStatus(status: number): boolean {
+    return status === 408 || status === 429 || status >= 500;
+  }
+
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async call<T>({
     method,
     url,
@@ -71,34 +81,88 @@ class HttpFactory {
     const headers = buildHeaders(accessToken, body);
     const requestBody = buildBody(body);
 
-    const options: RequestInit = {
-      method,
-      headers,
-      credentials: "include",
-      body: requestBody,
-    };
+    let lastError: unknown;
+    const canRetry = method === "GET";
 
-    const response = await fetch(finalUrl, options);
-    const contentType = response.headers.get("content-type");
-    const data = contentType?.includes("json")
-      ? await response.json()
-      : await response.text();
-
-    if (!response.ok) {
-      const payload = parseApiErrorPayload(data);
-
-      throw new ApiRequestError(
-        payload?.message || `HTTP ${response.status}: ${response.statusText}`,
-        {
-          status: response.status,
-          code: payload?.errors?.code,
-          retryable: payload?.errors?.retryable,
-          details: data,
-        }
+    for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.REQUEST_TIMEOUT_MS,
       );
+
+      try {
+        const options: RequestInit = {
+          method,
+          headers,
+          credentials: "include",
+          body: requestBody,
+          signal: controller.signal,
+        };
+
+        const response = await fetch(finalUrl, options);
+        const shouldRetry =
+          canRetry &&
+          this.isRetryableStatus(response.status) &&
+          attempt < this.MAX_RETRIES;
+
+        if (shouldRetry) {
+          await this.delay(200 * attempt);
+          continue;
+        }
+
+        const contentType = response.headers.get("content-type");
+        const data = contentType?.includes("json")
+          ? await response.json()
+          : await response.text();
+
+        if (!response.ok) {
+          const payload = parseApiErrorPayload(data);
+
+          throw new ApiRequestError(
+            payload?.message ||
+              `HTTP ${response.status}: ${response.statusText}`,
+            {
+              status: response.status,
+              code: payload?.errors?.code,
+              retryable: payload?.errors?.retryable,
+              details: data,
+            },
+          );
+        }
+
+        return { headers: response.headers, body: data };
+      } catch (error) {
+        lastError = error;
+
+        const isTimeout =
+          error instanceof DOMException && error.name === "AbortError";
+        const shouldRetry = canRetry && attempt < this.MAX_RETRIES;
+
+        if (isTimeout && !shouldRetry) {
+          throw new ApiRequestError("Request timed out after 5 seconds", {
+            status: 504,
+            retryable: false,
+          });
+        }
+
+        if (!shouldRetry) {
+          throw error;
+        }
+
+        await this.delay(200 * attempt);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
 
-    return { headers: response.headers, body: data };
+    throw (
+      lastError ??
+      new ApiRequestError("Request failed after retries", {
+        status: 500,
+        retryable: false,
+      })
+    );
   }
 }
 

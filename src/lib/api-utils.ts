@@ -1,7 +1,7 @@
 export const getClientOrServerUrl = (): string => {
   // Always use the full URL for consistency in server-side rendering
   // This prevents hydration mismatches
-  const baseUrl = process.env["NEXT_PUBLIC_API_URL"] || process.env["BACKEND_DOMAIN"] || "http://localhost:3000/api";
+  const baseUrl = process.env["BACKEND_DOMAIN"] || "http://localhost:3000/api";
 
   // In browser context, use relative path for same-origin requests
   if (typeof window !== "undefined") {
@@ -21,7 +21,7 @@ export function serializeBigInt<T>(obj: T): any {
     return obj;
   }
 
-  if (typeof obj === 'bigint') {
+  if (typeof obj === "bigint") {
     return Number(obj);
   }
 
@@ -34,7 +34,7 @@ export function serializeBigInt<T>(obj: T): any {
     return obj.map(serializeBigInt);
   }
 
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     const serialized: any = {};
     for (const [key, value] of Object.entries(obj)) {
       serialized[key] = serializeBigInt(value);

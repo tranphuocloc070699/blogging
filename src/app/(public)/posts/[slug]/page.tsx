@@ -1,13 +1,13 @@
-import { Metadata } from 'next';
-import { PostDto } from '@/types/posts';
-import Image from 'next/image';
-import NovelEditorWrapper from '@/components/posts/novel-editor-wrapper';
-import BlogPostTags from '@/components/public/blog-posts/blog-post-tags';
-import BlogPostBreadcrumb from '@/components/public/blog-posts/blog-post-breadcrumb';
-import BlogPostAction from '@/components/public/blog-posts/blog-post-action';
-import { notFound } from 'next/navigation';
-import { auth } from '@/auth';
-import { getPublishedPostBySlug } from '@/lib/public-posts';
+import { Metadata } from "next";
+import { PostDto } from "@/types/posts";
+import Image from "next/image";
+import NovelEditorWrapper from "@/components/posts/novel-editor-wrapper";
+import BlogPostTags from "@/components/public/blog-posts/blog-post-tags";
+import BlogPostBreadcrumb from "@/components/public/blog-posts/blog-post-breadcrumb";
+import BlogPostAction from "@/components/public/blog-posts/blog-post-action";
+import { notFound } from "next/navigation";
+import { getPublishedPostBySlug } from "@/lib/public-posts";
+import { getAccessTokenFromCookie, verifyToken } from "@/lib/auth.util";
 
 interface PageProps {
   params: {
@@ -16,30 +16,34 @@ interface PageProps {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
     const post = await getPublishedPostBySlug(slug);
     if (!post) {
       return {
-        title: 'Post Not Found',
-        description: 'The requested post could not be found.',
+        title: "Post Not Found",
+        description: "The requested post could not be found.",
       };
     }
 
     return {
       title: post.title,
       description: post.excerpt || post.title,
-      keywords: post.keywords || '',
+      keywords: post.keywords || "",
       openGraph: {
         title: post.title,
         description: post.excerpt || post.title,
         images: post.thumbnail ? [post.thumbnail] : [],
-        type: 'article',
-        publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
+        type: "article",
+        publishedTime: post.publishedAt
+          ? new Date(post.publishedAt).toISOString()
+          : undefined,
       },
       twitter: {
-        card: 'summary_large_image',
+        card: "summary_large_image",
         title: post.title,
         description: post.excerpt || post.title,
         images: post.thumbnail ? [post.thumbnail] : [],
@@ -47,20 +51,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   } catch (error) {
     return {
-      title: 'Post Not Found',
-      description: 'The requested post could not be found.',
+      title: "Post Not Found",
+      description: "The requested post could not be found.",
     };
   }
 }
 
 export default async function PostDetailPage({ params }: PageProps) {
-  const session = await auth();
   let post: PostDto | null = null;
 
   try {
     const { slug } = await params;
-    post = await getPublishedPostBySlug(slug, session?.user?.id);
-  } catch {
+    const accessToken = await getAccessTokenFromCookie();
+    const userId = accessToken ? verifyToken(accessToken)?.userId : undefined;
+    post = await getPublishedPostBySlug(slug, userId);
+  } catch (error) {
+    console.error("Failed to load post detail:", error);
     notFound();
   }
 
@@ -106,12 +112,13 @@ export default async function PostDetailPage({ params }: PageProps) {
               <NovelEditorWrapper
                 value={post.content}
                 readOnly
-              // className="pointer-events-none"
+                // className="pointer-events-none"
               />
             </div>
           </article>
 
           {/* Fixed Like and Share buttons at bottom */}
+
           <BlogPostAction
             postId={post.id}
             initialLikesCount={post.likesCount}

@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useMemo, useEffect, useState } from "react";
-import { MultiSelect, type MultiSelectGroup } from "@/components/ui/multi-select";
+import {
+  MultiSelect,
+  type MultiSelectGroup,
+} from "@/components/ui/multi-select";
 
 interface Term {
   id: number;
@@ -11,7 +14,6 @@ interface Term {
     name: string;
   };
 }
-
 interface Taxonomy {
   id: number;
   name: string;
@@ -29,32 +31,33 @@ export default function PostTaxonomies({
   termIds,
   onTermIdsChange,
   terms,
-  taxonomies
+  taxonomies,
 }: PostTaxonomiesProps) {
-
   // Local state to control the component
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
   // Initialize and sync with termIds
   useEffect(() => {
-    const newValues = termIds.map(id => id.toString());
+    const newValues = termIds.map((id) => id.toString());
     setSelectedValues(newValues);
   }, [termIds]);
 
   // Convert to grouped options format for MultiSelect with taxonomy in label
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return taxonomies
-      .map(taxonomy => {
-        const taxonomyTerms = terms.filter(t => t.taxonomy.id === taxonomy.id);
+      .map((taxonomy) => {
+        const taxonomyTerms = terms.filter(
+          (t) => t.taxonomy.id === taxonomy.id,
+        );
 
         if (taxonomyTerms.length === 0) return null;
 
         return {
           heading: taxonomy.name,
-          options: taxonomyTerms.map(term => ({
+          options: taxonomyTerms.map((term) => ({
             label: `${term.name} (${taxonomy.name})`,
             value: term.id.toString(),
-          }))
+          })),
         };
       })
       .filter(Boolean) as MultiSelectGroup[];
@@ -62,10 +65,10 @@ export default function PostTaxonomies({
 
   // Handle value change from MultiSelect
   const handleValueChange = (values: string[]) => {
-    console.log('MultiSelect values changed:', values);
+    console.log("MultiSelect values changed:", values);
     setSelectedValues(values);
-    const newTermIds = values.map(v => parseInt(v, 10));
-    console.log('Converted to term IDs:', newTermIds);
+    const newTermIds = values.map((v) => parseInt(v, 10));
+    console.log("Converted to term IDs:", newTermIds);
     onTermIdsChange(newTermIds);
   };
 
@@ -74,7 +77,7 @@ export default function PostTaxonomies({
       <div className="space-y-4">
         <h3 className="text-sm font-semibold">Taxonomies & Terms</h3>
         <p className="text-sm text-gray-500">
-          No taxonomies available.{' '}
+          No taxonomies available.{" "}
           <a href="/auth/taxonomies" className="text-blue-600 hover:underline">
             Create a taxonomy first
           </a>

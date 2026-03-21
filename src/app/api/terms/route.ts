@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/middleware';
 import {
   successResponse,
@@ -9,9 +8,10 @@ import {
   serverErrorResponse,
   serviceUnavailableResponse
 } from '@/lib/response';
-import { serializeBigInt } from '@/lib/api-utils';
-import { Prisma } from '@prisma/client';
 import { isDatabaseUnavailableError } from '@/lib/app-error';
+import { serializeBigInt } from '@/lib/api-utils';
+import { termServerService } from '@/services/modules/term-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 // GET /api/terms - Get all terms with optional taxonomy filter
 export async function GET(request: NextRequest) {
@@ -26,50 +26,15 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const taxonomyId = searchParams.get('taxonomyId');
 
-    // Build where clause
-    const where: Prisma.TermWhereInput = {};
-
-    if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
-    }
-
-    if (taxonomyId) {
-      where.taxonomyId = parseInt(taxonomyId);
-    }
-
-    // Get total count
-    const totalElements = await prisma.term.count({ where });
-
-    // Build query options
-    const queryOptions: any = {
-      where,
-      orderBy: { [sortBy]: sortDir },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        taxonomy: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
-          }
-        },
-        postTerms: true
-      }
-    };
-
-    // Add pagination only if not fetching full data
-    if (!isFull) {
-      queryOptions.skip = page * size;
-      queryOptions.take = size;
-    }
-
-    // Get terms
-    const terms = await prisma.term.findMany(queryOptions);
-
-
+    const { terms, totalElements } = await termServerService.getTerms({
+      isFull,
+      page,
+      size,
+      sortBy,
+      sortDir: sortDir as "asc" | "desc",
+      search: search ?? undefined,
+      taxonomyId: taxonomyId ?? undefined,
+    });
 
     // If fetching all data, return without pagination metadata
     if (isFull) {
@@ -96,6 +61,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Get terms error:', error);
+    captureApiRouteError(error, { method: "GET", route: "/api/terms" });
 
     if (isDatabaseUnavailableError(error)) {
       return serviceUnavailableResponse(
@@ -124,54 +90,24 @@ export async function POST(request: NextRequest) {
       return errorResponse('Name and taxonomy ID are required');
     }
 
-    // Generate slug if not provided
-    const termSlug = slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-    // Check if taxonomy exists
-    const taxonomy = await prisma.taxonomy.findUnique({
-      where: { id: parseInt(taxonomyId) },
+    const { error, data: term } = await termServerService.createTerm({
+      name,
+      slug,
+      description,
+      taxonomyId: parseInt(taxonomyId),
     });
 
-    if (!taxonomy) {
+    if (error === "TAXONOMY_NOT_FOUND") {
       return errorResponse('Taxonomy not found', 404);
     }
 
-    // Check if term already exists in this taxonomy (case-insensitive)
-    const existing = await prisma.term.findFirst({
-      where: {
-        taxonomyId: parseInt(taxonomyId),
-        OR: [
-          { name: { equals: name, mode: 'insensitive' } },
-          { slug: { equals: termSlug, mode: 'insensitive' } },
-        ],
-      },
-    });
-
-    if (existing) {
+    if (error === "DUPLICATE") {
       return conflictResponse('Term with this name or slug already exists in this taxonomy');
     }
 
-    // Create term
-    const term = await prisma.term.create({
-      data: {
-        name,
-        slug: termSlug,
-        description,
-        taxonomyId: parseInt(taxonomyId),
-      },
-      include: {
-        taxonomy: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        _count: {
-          select: { postTerms: true },
-        },
-      },
-    });
+    if (!term) {
+      return errorResponse('Failed to create term', 500);
+    }
 
     const { _count, ...rest } = term;
     return successResponse(
@@ -188,6 +124,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     console.error('Create term error:', error);
+    captureApiRouteError(error, { method: "POST", route: "/api/terms" });
 
     // Handle Prisma unique constraint errors
     if (error.code === 'P2002') {

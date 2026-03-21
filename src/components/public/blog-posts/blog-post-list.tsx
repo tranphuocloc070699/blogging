@@ -4,6 +4,7 @@ import { ListEmpty } from "@/components/list-empty";
 import type { ApiResponse } from "@/lib/response";
 import type { PostDashboardDto } from "@/types/posts";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import BlogPostItem from "./blog-post-item";
 import LoadMore from "./load-more";
 
@@ -56,6 +57,7 @@ const BlogPostList = ({
   search,
   tag,
 }: BlogPostListProps) => {
+  const router = useRouter();
   const [posts, setPosts] = useState(initialPosts);
   const [page, setPage] = useState(currentPage);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -66,6 +68,12 @@ const BlogPostList = ({
     setPage(currentPage);
     setHasMore(initialHasMore);
   }, [currentPage, initialHasMore, initialPosts, search, tag]);
+
+  useEffect(() => {
+    posts.slice(0, 5).forEach((post) => {
+      router.prefetch(`/posts/${post.slug}`);
+    });
+  }, [posts, router]);
 
   useEffect(() => {
     if (currentPage <= 1) {
@@ -142,8 +150,12 @@ const BlogPostList = ({
 
   return (
     <div className="flex flex-col">
-      {posts.map((post) => (
-        <BlogPostItem key={`${post.id}-${post.slug}`} post={post} />
+      {posts.map((post, index) => (
+        <BlogPostItem
+          key={`${post.id}-${post.slug}`}
+          post={post}
+          isPriority={index === 0 && page === 1}
+        />
       ))}
       {hasMore && (
         <LoadMore

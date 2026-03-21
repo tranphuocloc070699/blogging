@@ -1,12 +1,10 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/middleware';
 import { successResponse, errorResponse, paginatedResponse, forbiddenResponse } from '@/lib/response';
-import { serializeBigInt } from '@/lib/api-utils';
-import { Prisma } from '@prisma/client';
 import { transformPostWithTaxonomies } from '@/lib/transformers/post-transformer';
-import { HEADER_AUTHORIZATION, USER_ROLE } from '@/config/enums';
+import { HEADER_AUTHORIZATION } from '@/config/enums';
 import { getUserFromAuthHeader } from '@/lib/auth.util';
+import { postServerService } from '@/services/modules/post-server-service';
+import { captureApiRouteError } from '@/lib/sentry-monitoring';
 
 // Valid post statuses (matching database check constraint)
 type PostStatus = 'DRAFT' | 'PUBLISHED';
@@ -91,52 +89,19 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as PostStatus | null;
     const keyword = searchParams.get('keyword');
 
-    // Build where clause
-    const where: Prisma.PostWhereInput = {};
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (keyword) {
-      where.OR = [
-        { title: { contains: keyword, mode: 'insensitive' } },
-        { content: { contains: keyword, mode: 'insensitive' } },
-        { excerpt: { contains: keyword, mode: 'insensitive' } },
-      ];
-    }
-
-    // Get total count
-    const totalElements = await prisma.post.count({ where });
-
-    // Get posts
-    const posts = await prisma.post.findMany({
-      where,
-      skip: page * size,
-      take: size,
-      orderBy: { [sortBy]: sortDir },
-      select: {
-        id: true,
-        title: true,
-        excerpt: true,
-        slug: true,
-        status: true,
-        publishedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        authorId: true,
-      },
+    const { posts, totalElements } = await postServerService.getAllPosts({
+      page,
+      size,
+      sortBy,
+      sortDir: sortDir as "asc" | "desc",
+      status: status ?? undefined,
+      keyword: keyword ?? undefined,
     });
-
-
 
     const totalPages = Math.ceil(totalElements / size);
 
-    // Convert BigInt to number for JSON serialization
-    const postsResponse = posts.map(post => serializeBigInt(post));
-
     return paginatedResponse(
-      postsResponse,
+      posts,
       {
         page,
         size,
@@ -149,6 +114,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Get posts error:', error);
+    captureApiRouteError(error, { method: "GET", route: "/api/posts" });
     return errorResponse('Failed to fetch posts', 500);
   }
 }
@@ -180,64 +146,29 @@ export async function POST(request: NextRequest) {
       return errorResponse('Title, excerpt, content, slug, and status are required');
     }
 
-    // Check if slug already exists
-    const existingPost = await prisma.post.findUnique({
-      where: { slug },
+    // Create post with terms
+    const { error, data: post } = await postServerService.createPost(user.userId, {
+      title,
+      excerpt,
+      content,
+      slug,
+      tableOfContents,
+      status,
+      termIds,
+      thumbnail,
+      keywords,
     });
 
-    if (existingPost) {
+    if (error === "DUPLICATE_SLUG") {
       return errorResponse('A post with this slug already exists', 409);
     }
 
-    // Create post with terms
-    const post = await prisma.post.create({
-      data: {
-        title,
-        excerpt,
-        content,
-        slug,
-        tableOfContents: tableOfContents || null,
-        status,
-        authorId: user.userId,
-        publishedAt: status === 'PUBLISHED' ? new Date() : null,
-        thumbnail,
-        keywords,
-        ...(termIds && termIds.length > 0 && {
-          postTerms: {
-            create: termIds.map((termId: number) => ({
-              termId,
-            })),
-          },
-        }),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
-        },
-        postTerms: {
-          include: {
-            term: {
-              include: {
-                taxonomy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    if (!post) {
+      return errorResponse('Failed to create post', 500);
+    }
 
     // Transform post to group terms by taxonomy
-    const transformedPost = transformPostWithTaxonomies(post);
+    const transformedPost = transformPostWithTaxonomies(post as any);
     return successResponse(transformedPost, 'Post created successfully', 201);
   } catch (error) {
     // If it's already a Response (from middleware), return it
@@ -245,6 +176,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     console.error('Create post error:', error);
+    captureApiRouteError(error, { method: "POST", route: "/api/posts" });
     return errorResponse('Failed to create post', 500);
   }
 }
