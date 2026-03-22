@@ -50,6 +50,7 @@ class ResourceService {
       url: this.ENDPOINT,
       body: formData,
       accessToken,
+      timeout: 60000,
     });
 
     if (!response.body.success) {

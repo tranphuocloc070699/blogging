@@ -7,6 +7,7 @@ interface HttpRequest {
   body?: object | FormData;
   params?: any;
   accessToken?: string | null;
+  timeout?: number;
 }
 
 interface HttpResponse<T> {
@@ -59,7 +60,7 @@ const buildBody = (body?: object | FormData) => {
 
 class HttpFactory {
   private readonly MAX_RETRIES = 3;
-  private readonly REQUEST_TIMEOUT_MS = 60000;
+  private readonly REQUEST_TIMEOUT_MS = 5000;
 
   private isRetryableStatus(status: number): boolean {
     return status === 408 || status === 429 || status >= 500;
@@ -75,11 +76,13 @@ class HttpFactory {
     body,
     params,
     accessToken,
+    timeout,
   }: HttpRequest): Promise<HttpResponse<T>> {
     const absoluteUrl = getAbsoluteUrl(url);
     const finalUrl = buildUrl(absoluteUrl, params);
     const headers = buildHeaders(accessToken, body);
     const requestBody = buildBody(body);
+    const timeoutMs = timeout ?? this.REQUEST_TIMEOUT_MS;
 
     let lastError: unknown;
     const canRetry = method === "GET";
@@ -88,7 +91,7 @@ class HttpFactory {
       const controller = new AbortController();
       const timeoutId = setTimeout(
         () => controller.abort(),
-        this.REQUEST_TIMEOUT_MS,
+        timeoutMs,
       );
 
       try {
@@ -140,7 +143,7 @@ class HttpFactory {
         const shouldRetry = canRetry && attempt < this.MAX_RETRIES;
 
         if (isTimeout && !shouldRetry) {
-          throw new ApiRequestError("Request timed out after 5 seconds", {
+          throw new ApiRequestError(`Request timed out after ${timeoutMs / 1000}s`, {
             status: 504,
             retryable: false,
           });
