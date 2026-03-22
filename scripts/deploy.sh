@@ -6,6 +6,9 @@ echo "==================================="
 
 cd /var/www/blogging
 
+echo "Pulling latest scripts and configs..."
+sudo git pull origin master
+
 echo "Pulling latest Docker images..."
 sudo docker compose -f docker-compose.prod.yml pull
 
