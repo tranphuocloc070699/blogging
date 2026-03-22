@@ -18,10 +18,10 @@ fi
 # ── Config ────────────────────────────────────────────────────────────────────
 BACKUP_S3_PREFIX="${BACKUP_S3_PREFIX:-postgres/blogging/prod}"
 timestamp="$(date +%F-%H%M%S)"
-filename="blogging-prod-${timestamp}.dump"
+filename="${timestamp}.dump"
+object_key="${filename}"
 tmp_dir="/tmp/blogging-db-backups"
 file_path="${tmp_dir}/${filename}"
-object_key="${BACKUP_S3_PREFIX}/$(date +%Y/%m/%d)/${filename}"
 
 mkdir -p "$tmp_dir"
 

@@ -6,6 +6,12 @@ services:
     container_name: postgres-blog
     env_file:
       - .env
+    command:
+      - "postgres"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_min_duration_statement=0"
     ports:
       - "5432:5432"
     volumes:
