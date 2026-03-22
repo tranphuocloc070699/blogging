@@ -60,3 +60,4 @@ infras/
 .agents/
 skills-lock.json
 pnpm-lock.yaml
+logs
