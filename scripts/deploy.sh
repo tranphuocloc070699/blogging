@@ -9,6 +9,10 @@ cd /var/www/blogging
 echo "Pulling latest scripts and configs..."
 sudo git pull origin master
 
+echo "Setting script permissions..."
+chmod +x /var/www/blogging/scripts/ops/*.sh
+chmod +x /var/www/blogging/scripts/*.sh
+
 echo "Pulling latest Docker images..."
 sudo docker compose -f docker-compose.prod.yml pull
 
