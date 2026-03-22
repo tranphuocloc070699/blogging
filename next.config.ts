@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     dangerouslyAllowLocalIP: true,
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/avif"],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       {

@@ -99,7 +99,7 @@ export default function NovelEditorWrapper({
     return (
       <div
         className={cn(
-          "min-h-[500px] w-full rounded-lg border border-gray-200 bg-white p-4",
+          "min-h-[500px] w-full rounded-lg  bg-white p-4",
           className,
         )}
       >

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadToMinio } from "@/lib/minio";
+import { uploadToMinio, type ImageUploadType } from "@/lib/minio";
 import { verifyToken } from "@/lib/auth.util";
 import { USER_ROLE } from "@/config/enums";
 import { log } from "console";
@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the uploaded file
-    // console.log({ request })
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const imageType = (formData.get("imageType") as ImageUploadType) || "post";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -60,10 +60,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 20 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 5MB." },
+        { error: "File too large. Maximum size is 20MB." },
         { status: 400 },
       );
     }
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to MinIO
-    const url = await uploadToMinio(buffer, file.name, file.type);
+    // Upload to MinIO with optimization
+    const url = await uploadToMinio(buffer, file.name, file.type, imageType);
 
     return NextResponse.json({
       success: true,

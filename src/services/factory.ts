@@ -59,7 +59,7 @@ const buildBody = (body?: object | FormData) => {
 
 class HttpFactory {
   private readonly MAX_RETRIES = 3;
-  private readonly REQUEST_TIMEOUT_MS = 5000;
+  private readonly REQUEST_TIMEOUT_MS = 60000;
 
   private isRetryableStatus(status: number): boolean {
     return status === 408 || status === 429 || status >= 500;

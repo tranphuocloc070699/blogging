@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { PostDto } from "@/types/posts";
-import Image from "next/image";
 import NovelEditorWrapper from "@/components/posts/novel-editor-wrapper";
 import BlogPostTags from "@/components/public/blog-posts/blog-post-tags";
 import BlogPostBreadcrumb from "@/components/public/blog-posts/blog-post-breadcrumb";
@@ -8,6 +7,25 @@ import BlogPostAction from "@/components/public/blog-posts/blog-post-action";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlug } from "@/lib/public-posts";
 import { getAccessTokenFromCookie, verifyToken } from "@/lib/auth.util";
+import { Separator } from "@/components/ui/separator";
+
+export function SeparatorDemo() {
+  return (
+    <div className="flex max-w-sm flex-col gap-4 text-sm">
+      <div className="flex flex-col gap-1.5">
+        <div className="leading-none font-medium">shadcn/ui</div>
+        <div className="text-muted-foreground">
+          The Foundation for your Design System
+        </div>
+      </div>
+      <Separator />
+      <div>
+        A set of beautifully designed components that you can customize, extend,
+        and build on.
+      </div>
+    </div>
+  );
+}
 
 interface PageProps {
   params: {
@@ -80,32 +98,20 @@ export default async function PostDetailPage({ params }: PageProps) {
         <div className="mx-auto w-full lg:w-[768px]">
           <BlogPostBreadcrumb slug={post.slug} publishedAt={post.publishedAt} />
 
-          <header className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+          <header className="mb-8">
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
               {post.title}
             </h1>
           </header>
 
           {post.excerpt && (
-            <div className="text-center mb-8 max-w-4xl mx-auto">
-              <p className="text-base md:text-lg text-gray-700 leading-relaxed">
+            <div className="mb-8 max-w-4xl mx-auto">
+              <p className="text-base text-gray-500 leading-relaxed">
                 {post.excerpt}
               </p>
             </div>
           )}
-
-          {post.thumbnail && (
-            <div className="mb-8 flex justify-center">
-              <Image
-                src={post.thumbnail}
-                alt={post.title}
-                width={500}
-                height={300}
-                className="rounded-lg object-cover w-full max-w-[768px] h-auto"
-              />
-            </div>
-          )}
-
+          <Separator />
           {/* Article Content */}
           <article className="mb-8">
             <div className="prose prose-lg max-w-none [&_.editor-wrapper]:border-0 [&_.ProseMirror]:outline-none [&_ul]:px-4 [&_ol]:px-4">
