@@ -34,7 +34,6 @@ export default function RootLayout({
           window.dataLayer = window.dataLayer || [];
           window.gtag = function gtag(){window.dataLayer.push(arguments);}
           window.gtag('js', new Date());
-          window.gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { debug_mode: true });
         `}</Script>
         <ThemeProvider>
           <SessionProvider
