@@ -78,7 +78,7 @@ export default function Header() {
   return (
     <>
       {/* Desktop Header */}
-      <header className="hidden md:block bg-white border-b border-gray-200">
+      <header className="hidden md:block bg-white ">
         <div className="max-w-7xl mx-auto px-6 h-[60px] flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-6">
@@ -102,7 +102,7 @@ export default function Header() {
 
       {/* Mobile Header */}
       <header
-        className={`md:hidden bg-white border-b border-gray-200 transition-all duration-300 ${
+        className={`md:hidden bg-white  transition-all duration-300 ${
           variant === "back"
             ? `sticky top-0 z-40 ${
                 showHeader ? "translate-y-0" : "-translate-y-full"

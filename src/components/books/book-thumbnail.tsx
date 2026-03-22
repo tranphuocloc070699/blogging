@@ -34,6 +34,7 @@ export default function BookThumbnail({ className }: BookThumbnailProps) {
 
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('imageType', 'thumbnail');
 
       const response = await fetch('/api/upload', {
         method: 'POST',

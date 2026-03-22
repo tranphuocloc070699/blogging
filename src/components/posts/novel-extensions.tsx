@@ -13,6 +13,9 @@ import {
   TiptapLink,
   UpdatedImage
 } from 'novel';
+import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
+import NextImage from 'next/image';
+import React, { useState } from 'react';
 
 import { useUserStore } from "@/store/user.store";
 import { Extension, Mark, mergeAttributes, Node } from '@tiptap/core';
@@ -172,6 +175,122 @@ const createUploadImagePlugin = () => {
   });
 };
 
+// React component for the image node view — enables Next.js <Image> with optimization
+function ImageNodeView({ node, editor, getPos }: { node: any; editor: any; getPos: any }) {
+  const [loaded, setLoaded] = useState(false);
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const { src, alt, caption, align, width, height } = node.attrs;
+
+  const imgWidth = width ? Number(width) : 200;
+  const imgHeight = height && height !== 'auto' ? Number(height) : 140;
+
+  const isEditing = typeof window !== 'undefined' && window.location.href.includes('/auth');
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isEditing) setToolbarVisible(v => !v);
+  };
+
+  const changeAlignment = (newAlign: string) => {
+    if (typeof getPos === 'function') {
+      editor.commands.updateAttributes('image', { align: newAlign });
+    }
+  };
+
+  const handleCaption = () => {
+    const newCaption = prompt('Enter image caption / alt text:', caption || '');
+    if (newCaption !== null && typeof getPos === 'function') {
+      editor.commands.updateAttributes('image', { caption: newCaption, alt: newCaption });
+    }
+  };
+
+  const alignClass =
+    align === 'left' ? 'mr-auto' :
+    align === 'right' ? 'ml-auto' :
+    align === 'full' ? 'w-full' :
+    'mx-auto';
+
+  const captionAlignClass =
+    align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
+
+  const btnBase = 'rounded p-2 transition-colors hover:bg-gray-100';
+  const btnActive = ' bg-blue-100 text-blue-600';
+
+  const isFull = align === 'full';
+  const containerStyle = isFull
+    ? { width: '100%' }
+    : { width: imgWidth, height: imgHeight };
+
+  return (
+    <NodeViewWrapper className="image-wrapper-container relative block w-full" data-align={align}>
+      {toolbarVisible && (
+        <div className="absolute -top-12 left-0 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl z-50" contentEditable={false}>
+          <button type="button" title="Align left" className={btnBase + (align === 'left' ? btnActive : '')} onClick={() => changeAlignment('left')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" title="Align center" className={btnBase + (align === 'center' ? btnActive : '')} onClick={() => changeAlignment('center')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" title="Align right" className={btnBase + (align === 'right' ? btnActive : '')} onClick={() => changeAlignment('right')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" title="Full width" className={btnBase + (align === 'full' ? btnActive : '')} onClick={() => changeAlignment('full')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </button>
+          <div className="w-px h-6 bg-gray-300 mx-1" />
+          <button type="button" title="Add caption" className={btnBase + (caption ? btnActive : '')} onClick={handleCaption}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+          </button>
+        </div>
+      )}
+
+      <div
+        className={`rounded-lg border border-gray-300 overflow-hidden cursor-pointer ${isFull ? 'w-full' : 'relative'} ${alignClass}`}
+        style={containerStyle}
+        onClick={handleImageClick}
+      >
+        {!loaded && (
+          <div
+            className="bg-gray-200 animate-pulse rounded-lg"
+            style={isFull ? { width: '100%', height: imgHeight } : { position: 'absolute', inset: 0 }}
+          />
+        )}
+        {src && isFull ? (
+          <NextImage
+            src={src}
+            alt={alt || ''}
+            width={0}
+            height={0}
+            sizes="100vw"
+            className={`w-full h-auto rounded-lg transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setLoaded(true)}
+            data-align={align}
+            data-caption={caption}
+          />
+        ) : src ? (
+          <NextImage
+            src={src}
+            alt={alt || ''}
+            fill
+            sizes={`${imgWidth}px`}
+            className={`object-cover rounded-lg transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setLoaded(true)}
+            data-align={align}
+            data-caption={caption}
+          />
+        ) : null}
+      </div>
+
+      {caption && (
+        <p className={`text-sm text-gray-500 italic mt-2 clear-both ${captionAlignClass}`}>
+          {caption}
+        </p>
+      )}
+    </NodeViewWrapper>
+  );
+}
+
 // Tiptap Image extension with MinIO upload and alignment
 const tiptapImage = TiptapImage.extend({
   addAttributes() {
@@ -220,219 +339,7 @@ const tiptapImage = TiptapImage.extend({
     ];
   },
   addNodeView() {
-    return ({ node, editor, getPos }) => {
-
-
-
-
-      const container = document.createElement('div');
-      container.className = 'image-wrapper-container relative inline-block w-full';
-      if (node.attrs["align"]) container.setAttribute('data-align', node.attrs["align"]);
-
-      const img = document.createElement('img');
-      img.src = node.attrs["src"];
-      img.alt = node.attrs["alt"] || '';
-      img.className = 'rounded-lg border border-gray-300 cursor-pointer';
-      if (node.attrs["width"]) img.style.width = node.attrs["width"] + 'px';
-      if (node.attrs["height"] && node.attrs["height"] !== 'auto') img.style.height = node.attrs["height"] + 'px';
-      if (node.attrs["align"]) img.setAttribute('data-align', node.attrs["align"]);
-      if (node.attrs["caption"]) img.setAttribute('data-caption', node.attrs["caption"]);
-
-      // Create alignment toolbar
-      const toolbar = document.createElement('div');
-      toolbar.className = 'absolute -top-12 left-0 hidden items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl z-50';
-      toolbar.contentEditable = 'false';
-
-      // Create caption display
-      const captionText = document.createElement('p');
-      const align = node.attrs["align"] || 'center';
-      const alignClass = align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
-      captionText.className = `text-sm text-gray-500 italic mt-2 clear-both ${alignClass}`;
-      captionText.textContent = node.attrs["caption"] || '';
-      captionText.style.display = node.attrs["caption"] ? 'block' : 'none';
-
-      // Toggle toolbar on image click
-      let isToolbarVisible = false;
-
-      const showToolbar = () => {
-        toolbar.className = toolbar.className.replace('hidden', 'flex');
-        isToolbarVisible = true;
-      };
-
-      const hideToolbar = () => {
-        toolbar.className = toolbar.className.replace('flex', 'hidden');
-        isToolbarVisible = false;
-      };
-
-      img.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.location.href.includes("/auth")) showToolbar();
-      };
-
-      // Hide toolbar when selection changes (moving to new line)
-      const onSelectionUpdate = () => {
-        if (!editor || typeof getPos !== 'function') return;
-
-        const { from } = editor.state.selection;
-        const pos = getPos();
-
-        // Check if cursor is still on this image node
-        if (from < pos || from > pos + node.nodeSize) {
-          hideToolbar();
-        }
-      };
-
-      // Listen to selection updates
-      editor.on('selectionUpdate', onSelectionUpdate);
-
-      // Cleanup listener when node is destroyed
-      const destroy = () => {
-        editor.off('selectionUpdate', onSelectionUpdate);
-      };
-
-      // Left align button
-      const leftBtn = document.createElement('button');
-      leftBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>';
-      leftBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'left' ? ' bg-blue-100 text-blue-600' : '');
-      leftBtn.type = 'button';
-      leftBtn.title = 'Align left';
-
-      // Center align button
-      const centerBtn = document.createElement('button');
-      centerBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>';
-      centerBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'center' ? ' bg-blue-100 text-blue-600' : '');
-      centerBtn.type = 'button';
-      centerBtn.title = 'Align center';
-
-      // Right align button
-      const rightBtn = document.createElement('button');
-      rightBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg>';
-      rightBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'right' ? ' bg-blue-100 text-blue-600' : '');
-      rightBtn.type = 'button';
-      rightBtn.title = 'Align right';
-
-      // Full width button
-      const fullBtn = document.createElement('button');
-      fullBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>';
-      fullBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["align"] === 'full' ? ' bg-blue-100 text-blue-600' : '');
-      fullBtn.type = 'button';
-      fullBtn.title = 'Full width';
-
-      // Caption button
-      const captionBtn = document.createElement('button');
-      captionBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>';
-      captionBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (node.attrs["caption"] ? ' bg-blue-100 text-blue-600' : '');
-      captionBtn.type = 'button';
-      captionBtn.title = 'Add caption';
-      captionBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const caption = prompt('Enter image caption / alt text:', node.attrs["caption"] || '');
-        if (caption !== null) {
-          if (typeof getPos === 'function') {
-            editor.commands.updateAttributes('image', {
-              caption: caption,
-              alt: caption,
-            });
-            captionText.textContent = caption;
-            captionText.style.display = caption ? 'block' : 'none';
-            captionBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (caption ? ' bg-blue-100 text-blue-600' : '');
-          }
-        }
-      };
-
-      // Update button states and caption alignment
-      const updateButtonStates = (align: string) => {
-        leftBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (align === 'left' ? ' bg-blue-100 text-blue-600' : '');
-        centerBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (align === 'center' ? ' bg-blue-100 text-blue-600' : '');
-        rightBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (align === 'right' ? ' bg-blue-100 text-blue-600' : '');
-        fullBtn.className = 'rounded p-2 transition-colors hover:bg-gray-100' + (align === 'full' ? ' bg-blue-100 text-blue-600' : '');
-
-        // Update caption alignment
-        if (align === 'left') {
-          captionText.className = 'text-sm text-gray-500 italic mt-2 clear-both text-left';
-        } else if (align === 'right') {
-          captionText.className = 'text-sm text-gray-500 italic mt-2 clear-both text-right';
-        } else if (align === 'full') {
-          captionText.className = 'text-sm text-gray-500 italic mt-2 clear-both text-center';
-        } else {
-          captionText.className = 'text-sm text-gray-500 italic mt-2 clear-both text-center';
-        }
-      };
-
-      // Smooth alignment change with fade effect
-      const changeAlignment = (align: string) => {
-        // Fade out
-        img.style.opacity = '0.3';
-
-        setTimeout(() => {
-          // Update alignment
-          editor.commands.updateAttributes('image', { align });
-          container.setAttribute('data-align', align);
-          img.setAttribute('data-align', align);
-          updateButtonStates(align);
-
-          // Fade back in
-          setTimeout(() => {
-            img.style.opacity = '1';
-          }, 50);
-        }, 150);
-      };
-
-      leftBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof getPos === 'function') {
-          changeAlignment('left');
-        }
-      };
-
-      centerBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof getPos === 'function') {
-          changeAlignment('center');
-        }
-      };
-
-      rightBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof getPos === 'function') {
-          changeAlignment('right');
-        }
-      };
-
-      fullBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof getPos === 'function') {
-          changeAlignment('full');
-        }
-      };
-
-      // Add separator
-      const separator = document.createElement('div');
-      separator.className = 'w-px h-6 bg-gray-300 mx-1';
-
-      toolbar.appendChild(leftBtn);
-      toolbar.appendChild(centerBtn);
-      toolbar.appendChild(rightBtn);
-      toolbar.appendChild(fullBtn);
-      toolbar.appendChild(separator);
-      toolbar.appendChild(captionBtn);
-
-      container.appendChild(toolbar);
-      container.appendChild(img);
-      container.appendChild(captionText);
-
-      return {
-        dom: container,
-        contentDOM: null,
-        destroy,
-      };
-    };
+    return ReactNodeViewRenderer(ImageNodeView);
   },
 }).configure({
   allowBase64: false, // Disable base64, use MinIO instead

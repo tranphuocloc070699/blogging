@@ -1,5 +1,4 @@
 "use client";
-
 import { formatDate } from "@/lib/string-util";
 import { PostDashboardDto } from "@/types/posts";
 import { Check, Heart } from "lucide-react";
@@ -10,11 +9,15 @@ import { useRouter } from "next/navigation";
 interface BlogPostItemProps {
   post: PostDashboardDto;
   isPriority?: boolean;
+  isRead?: boolean;
 }
 
-const BlogPostItem = ({ post, isPriority = false }: BlogPostItemProps) => {
+const BlogPostItem = ({
+  post,
+  isPriority = false,
+  isRead = false,
+}: BlogPostItemProps) => {
   const router = useRouter();
-  const isRead = false;
   const detailHref = `/posts/${post.slug}`;
 
   const prefetchDetail = () => {
@@ -30,48 +33,59 @@ const BlogPostItem = ({ post, isPriority = false }: BlogPostItemProps) => {
       onMouseEnter={prefetchDetail}
       onTouchStart={prefetchDetail}
     >
-      <div className="flex flex-col md:flex-row gap-4 mb-10 transition-colors ">
-        <div className="relative w-full md:w-40 h-48 md:h-28 flex-shrink-0  bg-gray-200">
+      <div className="flex flex-row gap-3 mb-6 transition-colors">
+        {/* Image Container - Fixed Aspect Ratio */}
+        <div className="relative w-24 h-20 md:w-40 md:h-28 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden aspect-[6/5]">
           {post.thumbnail ? (
             <Image
               src={post.thumbnail}
-              alt={post.title}
+              alt={"Blog post thumbnail"}
               fill
-              sizes="(max-width: 768px) 100vw, 160px"
+              sizes="(max-width: 768px) 96px, 160px"
+              quality={75}
               priority={isPriority}
               loading={isPriority ? "eager" : "lazy"}
               fetchPriority={isPriority ? "high" : "auto"}
-              className="rounded-md object-cover transition-transform duration-300"
+              className="rounded-md object-cover"
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 112'%3E%3Crect fill='%23f3f4f6' width='160' height='112'/%3E%3C/svg%3E"
             />
           ) : (
-            <div className="w-full h-full bg-gray-300" />
+            <div className="w-full h-full bg-gray-300 rounded-md flex items-center justify-center">
+              <span className="text-xs text-gray-500">No image</span>
+            </div>
           )}
         </div>
 
-        <div className="flex flex-col  flex-1">
-          <h2 className="font-semibold text-xl line-clamp-2 mb-0 group-hover:text-blue-600 transition-colors">
+        {/* Content */}
+        <div className="flex flex-col flex-1 min-w-0">
+          <h2 className="font-semibold text-base md:text-xl line-clamp-2 text-black group-hover:text-gray-600 transition-colors leading-snug">
             {post.title}
           </h2>
-
-          <p className="text-sm text-gray-600 line-clamp-2 mt-0 leading-5">
+          <p className="text-xs md:text-sm text-gray-500 line-clamp-2 leading-5 mt-0">
             {post.excerpt}
           </p>
 
-          <div className="flex items-center justify-between  flex-wrap gap-2 md:mt-auto mt-4">
-            <div className="flex items-center gap-3 text-sm text-gray-500">
+          {/* Footer - Date, Likes, Read Status */}
+          <div className="flex items-center justify-between flex-wrap gap-2 mt-auto pt-2">
+            <div className="flex items-center gap-3 text-xs text-gray-400">
               <span>{formatDate(post.publishedAt)}</span>
               <span>•</span>
               <div className="flex items-center gap-1">
                 <Heart
-                  className={`w-4 h-4 ${post.isLiked ? "fill-black text-black" : ""}`}
+                  className={`w-3 h-3 md:w-4 md:h-4 ${
+                    post.isLiked ? "fill-black text-black" : ""
+                  }`}
                 />
                 <span>{post.likesCount || 0}</span>
               </div>
             </div>
+
+            {/* Read Indicator */}
             {isRead && (
-              <div className="flex items-center gap-1 text-sm text-blue-600">
+              <div className="flex items-center gap-1 text-xs text-green-600">
                 <span>read</span>
-                <Check className="w-4 h-4" />
+                <Check className="w-3 h-3 md:w-4 md:h-4" />
               </div>
             )}
           </div>

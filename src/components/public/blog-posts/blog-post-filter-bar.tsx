@@ -183,7 +183,7 @@ const BlogPostFilterBar = () => {
             ) : (
               <button
                 onClick={toggleMobileSearch}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50"
               >
                 <Search className="h-5 w-5 text-gray-600" />
               </button>
