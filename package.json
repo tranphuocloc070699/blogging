@@ -46,6 +46,7 @@
     "nextjs-toploader": "^3.8.16",
     "novel": "^1.0.2",
     "prisma": "6.17.1",
+    "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",

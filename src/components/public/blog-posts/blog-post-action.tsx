@@ -31,6 +31,7 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 	const rafRef = useRef<number | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [showLoginModal, setShowLoginModal] = useState(false);
+	const [showShareModal, setShowShareModal] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
 
@@ -105,12 +106,12 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 	};
 
 	const handleShare = async () => {
-		navigator.clipboard.writeText(window.location.href);
+		await navigator.clipboard.writeText(window.location.href);
 		trackGa4Event("post_shared", {
 			post_id: postId,
 			share_method: "copy_link",
 		});
-		alert('Link copied to clipboard!');
+		setShowShareModal(true);
 	};
 
 	return (
@@ -141,6 +142,23 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 					</button>
 				</div>
 			</div>
+
+			{/* Share success modal */}
+			<Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Link Copied</DialogTitle>
+						<DialogDescription>
+							The link has been copied to your clipboard.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button onClick={() => setShowShareModal(false)}>
+							Done
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			{/* Login confirmation modal */}
 			<Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
