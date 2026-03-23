@@ -20,14 +20,13 @@ type LoginFormData = {
 const schema = yup.object({
   email: yup
     .string()
-    .required("Vui lòng nhập email")
-    .email("Email không hợp lệ"),
+    .required("Please enter your email")
+    .email("Please enter a valid email"),
   password: yup
     .string()
-    .required("Mật khẩu là bắt buộc")
-    .min(3, "Mật khẩu phải có ít nhất 3 ký tự")
+    .required("Please enter your password")
+    .min(3, "Password must contain at least 3 characters"),
 });
-
 export default function LoginForm() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,13 +36,13 @@ export default function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
   } = useForm<LoginFormData>({
     resolver: yupResolver(schema),
     defaultValues: {
       email: "",
-      password: ""
-    }
+      password: "",
+    },
   });
 
   // Watch for input changes to reset login error
@@ -86,7 +85,6 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   }
-
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

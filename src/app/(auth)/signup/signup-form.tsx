@@ -21,16 +21,17 @@ type SignupFormData = {
 const schema = yup.object({
   username: yup
     .string()
-    .required("Vui lòng nhập tên người dùng")
-    .min(3, "Tên người dùng phải có ít nhất 3 ký tự"),
+    .required("Please enter your username")
+    .min(3, "Username must contain at least 3 characters")
+    .max(30, "Username must be less than 20 characters"),
   email: yup
     .string()
-    .required("Vui lòng nhập email")
-    .email("Email không hợp lệ"),
+    .required("Please enter your email")
+    .email("Please enter a valid email"),
   password: yup
     .string()
-    .required("Mật khẩu là bắt buộc")
-    .min(3, "Mật khẩu phải có ít nhất 3 ký tự")
+    .required("Please enter your password")
+    .min(3, "Password must contain at least 3 characters"),
 });
 
 export default function SignupForm() {
@@ -42,14 +43,14 @@ export default function SignupForm() {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
   } = useForm<SignupFormData>({
     resolver: yupResolver(schema),
     defaultValues: {
       username: "",
       email: "",
-      password: ""
-    }
+      password: "",
+    },
   });
 
   // Watch for input changes to reset signup error
@@ -84,7 +85,9 @@ export default function SignupForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        setSignupError(result.message || "Failed to create account. Please try again.");
+        setSignupError(
+          result.message || "Failed to create account. Please try again.",
+        );
         return;
       }
 
