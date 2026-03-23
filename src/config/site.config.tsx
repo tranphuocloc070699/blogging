@@ -1,10 +1,10 @@
 enum MODE {
   LIGHT,
-  DARK
+  DARK,
 }
 
 export const siteConfig = {
-  title: 'Loffy',
+  title: "Loffy Tech Blog",
   description: `A personal blog sharing insights on software development, Flutter, and AI experiments. Expect tutorials, project write-ups, and thoughts on modern tech`,
   logo: "/logo.svg",
   icon: "/favicon.ico",
