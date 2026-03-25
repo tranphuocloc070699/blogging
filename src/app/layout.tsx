@@ -19,7 +19,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log({ env: process.env.NEXT_PUBLIC_GA_ID });
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body

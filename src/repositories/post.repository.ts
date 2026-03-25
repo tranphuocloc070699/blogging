@@ -293,7 +293,6 @@ export const postRepository = {
   },
 
   async findPublishedBySlug(slug: string) {
-    console.log({ slug });
     return prisma.post.findFirst({
       where: {
         slug,

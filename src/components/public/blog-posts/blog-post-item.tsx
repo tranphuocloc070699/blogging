@@ -59,7 +59,7 @@ const BlogPostItem = ({
 
         {/* Content */}
         <div className="flex flex-col flex-1 min-w-0">
-          <h2 className="font-semibold text-base md:text-xl line-clamp-2 text-black group-hover:text-gray-600 transition-colors leading-snug">
+          <h2 className="font-semibold text-base md:text-xl line-clamp-2 text-black group-hover:text-gray-600 transition-colors leading-snug pb-0">
             {post.title}
           </h2>
           <p className="text-xs md:text-sm text-gray-500 line-clamp-2 leading-5 mt-0">
