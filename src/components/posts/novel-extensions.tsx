@@ -11,7 +11,6 @@ import {
   TaskList,
   TiptapImage,
   TiptapLink,
-  UpdatedImage,
 } from "novel";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import NextImage from "next/image";
@@ -21,7 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import { useUserStore } from "@/store/user.store";
 import { Extension, Mark, mergeAttributes, Node } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 import {
@@ -39,6 +38,7 @@ import {
   Youtube,
 } from "lucide-react";
 import resourceService from "@/services/modules/resource-service";
+import { NOVEL_HIGHLIGHT_COLOR } from "@/config/enums";
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common);
@@ -54,33 +54,14 @@ const placeholder = Placeholder.configure({
   includeChildren: false,
 });
 
-// Sentinel src used for the uploading placeholder node (never shown as an image)
-const UPLOAD_PLACEHOLDER_SRC = "__uploading__";
-
 // Upload image to MinIO
 async function uploadImage(file: File): Promise<string> {
   try {
-    // Get auth token from localStorage
     const token = useUserStore.getState().accessToken;
     if (!token) {
       throw new Error("Please login to upload images");
     }
-
-    // Create form data
-    // const formData = new FormData();
-    // formData.append('file', file);
-
-    // Upload to MinIO via API
-    // const response = await fetch('/api/upload', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${token}`,
-    //   },
-    //   body: formData,
-    // });
-
     const response = await resourceService.uploadFile(file, token);
-
     if (!response.success) {
       throw new Error("Upload failed");
     }
@@ -92,24 +73,58 @@ async function uploadImage(file: File): Promise<string> {
 }
 
 // Custom plugin for drag-and-drop and paste image upload
-const uploadImagePlugin = new PluginKey("uploadImage");
+const uploadImagePluginKey = new PluginKey("uploadImage");
 
 const createUploadImagePlugin = () => {
   return new Plugin({
-    key: uploadImagePlugin,
+    key: uploadImagePluginKey,
     props: {
       handlePaste(view, event) {
         const items = Array.from(event.clipboardData?.items || []);
+        const types = Array.from(event.clipboardData?.types || []);
+
+        // If clipboard has both text/html and Files, it's likely a drag-reposition
+        // of an existing node, not a real paste. Check if html contains an existing image.
+        if (types.includes("text/html") && types.includes("Files")) {
+          const htmlData = event.clipboardData?.getData("text/html") || "";
+          console.log("[paste] html content:", htmlData);
+
+          // If the HTML contains an image with a real URL (not uploading),
+          // it's a drag of existing image — let ProseMirror handle it natively
+          if (
+            htmlData.includes("<img") &&
+            !htmlData.includes("__uploading__")
+          ) {
+            console.log(
+              "[paste] detected drag of existing image, skipping upload",
+            );
+            return false;
+          }
+        }
+
         const imageItem = items.find((item) => item.type.startsWith("image/"));
+        console.log("[paste] imageItem found:", !!imageItem);
 
         if (imageItem) {
           event.preventDefault();
           const file = imageItem.getAsFile();
+          console.log(
+            "[paste] file from imageItem:",
+            file?.name,
+            file?.size,
+            file?.type,
+          );
+
           if (file) {
             const { schema } = view.state;
-            // Insert placeholder immediately
+            const uploadId = `__uploading__${Date.now()}_${Math.random()}`;
+            console.log(
+              "[paste] creating placeholder with uploadId:",
+              uploadId,
+            );
+
             const placeholderNode = schema?.nodes["image"]?.create({
-              src: UPLOAD_PLACEHOLDER_SRC,
+              src: uploadId,
               uploading: true,
               width: "full",
               height: "auto",
@@ -117,14 +132,35 @@ const createUploadImagePlugin = () => {
               alt: "",
               caption: "",
             });
+
             const insertTr = view.state.tr.replaceSelectionWith(
               placeholderNode as any,
             );
             view.dispatch(insertTr);
-            const placeholderPos = insertTr.selection.from - 1;
+
+            const findPlaceholder = () => {
+              let pos = -1;
+              view.state.doc.descendants((node, nodePos) => {
+                if (node.type.name === "image" && node.attrs.src === uploadId) {
+                  pos = nodePos;
+                }
+              });
+              return pos;
+            };
+
+            console.log(
+              "[paste] placeholder pos immediately after insert:",
+              findPlaceholder(),
+            );
 
             uploadImage(file)
               .then((url) => {
+                const currentPos = findPlaceholder();
+                console.log(`[paste:then] placeholder pos: ${currentPos}`);
+                if (currentPos < 0) {
+                  console.warn("[paste:then] placeholder not found, skipping");
+                  return;
+                }
                 const node = view.state.schema?.nodes["image"]?.create({
                   src: url,
                   uploading: false,
@@ -135,20 +171,28 @@ const createUploadImagePlugin = () => {
                   caption: "",
                 });
                 const tr = view.state.tr.replaceWith(
-                  placeholderPos,
-                  placeholderPos + 1,
+                  currentPos,
+                  currentPos + 1,
                   node as any,
                 );
                 view.dispatch(tr);
+                console.log(
+                  "[paste:then] doc after replace:",
+                  view.state.doc.toString(),
+                );
               })
               .catch((error) => {
-                // Remove placeholder on error
-                const tr = view.state.tr.delete(
-                  placeholderPos,
-                  placeholderPos + 1,
-                );
-                view.dispatch(tr);
                 console.error("Paste image upload error:", error);
+                const currentPos = findPlaceholder();
+                console.log(`[paste:catch] placeholder pos: ${currentPos}`);
+                if (currentPos >= 0) {
+                  const tr = view.state.tr.delete(currentPos, currentPos + 1);
+                  view.dispatch(tr);
+                } else {
+                  console.warn(
+                    "[paste:catch] placeholder not found, nothing to delete",
+                  );
+                }
                 alert(
                   error instanceof Error
                     ? error.message
@@ -160,19 +204,25 @@ const createUploadImagePlugin = () => {
         }
         return false;
       },
+
       handleDrop(view, event) {
         const hasFiles = event.dataTransfer?.files?.length;
-        if (!hasFiles) {
-          return false;
-        }
-
+        console.log("[drop] hasFiles:", hasFiles);
+        console.log(
+          "[drop] dataTransfer files:",
+          Array.from(event.dataTransfer?.files || []).map((f) => f.name),
+        );
+        console.log(
+          "[drop] dataTransfer types:",
+          Array.from(event.dataTransfer?.types || []),
+        );
+        if (!hasFiles) return false;
         const images = Array.from(event.dataTransfer.files).filter((file) =>
           file.type.startsWith("image/"),
         );
+        console.log("[drop] image files found:", images.length);
 
-        if (images.length === 0) {
-          return false;
-        }
+        if (images.length === 0) return false;
 
         event.preventDefault();
 
@@ -183,10 +233,12 @@ const createUploadImagePlugin = () => {
         });
 
         images.forEach((image) => {
-          const insertPos = coordinates?.pos || 0;
-          // Insert placeholder immediately
+          // Unique ID per dropped image
+          const uploadId = `__uploading__${Date.now()}_${Math.random()}`;
+          const insertPos = coordinates?.pos ?? 0;
+
           const placeholderNode = schema.nodes["image"]?.create({
-            src: UPLOAD_PLACEHOLDER_SRC,
+            src: uploadId,
             uploading: true,
             width: "full",
             height: "auto",
@@ -194,14 +246,31 @@ const createUploadImagePlugin = () => {
             alt: "",
             caption: "",
           });
+
           const insertTr = view.state.tr.insert(
             insertPos,
             placeholderNode as any,
           );
           view.dispatch(insertTr);
 
+          const findPlaceholder = () => {
+            let pos = -1;
+            view.state.doc.descendants((node, nodePos) => {
+              if (node.type.name === "image" && node.attrs.src === uploadId) {
+                pos = nodePos;
+              }
+            });
+            return pos;
+          };
+
           uploadImage(image)
             .then((url) => {
+              const currentPos = findPlaceholder();
+              console.log(`[drop:then] placeholder pos: ${currentPos}`);
+              if (currentPos < 0) {
+                console.warn("[drop:then] placeholder not found, skipping");
+                return;
+              }
               const node = view.state.schema.nodes["image"]?.create({
                 src: url,
                 uploading: false,
@@ -212,16 +281,24 @@ const createUploadImagePlugin = () => {
                 caption: "",
               });
               const tr = view.state.tr.replaceWith(
-                insertPos,
-                insertPos + 1,
+                currentPos,
+                currentPos + 1,
                 node as any,
               );
               view.dispatch(tr);
             })
             .catch((error) => {
-              const tr = view.state.tr.delete(insertPos, insertPos + 1);
-              view.dispatch(tr);
               console.error("Drop image upload error:", error);
+              const currentPos = findPlaceholder();
+              console.log(`[drop:catch] placeholder pos: ${currentPos}`);
+              if (currentPos >= 0) {
+                const tr = view.state.tr.delete(currentPos, currentPos + 1);
+                view.dispatch(tr);
+              } else {
+                console.warn(
+                  "[drop:catch] placeholder not found, nothing to delete",
+                );
+              }
               alert(
                 error instanceof Error
                   ? error.message
@@ -236,7 +313,7 @@ const createUploadImagePlugin = () => {
   });
 };
 
-// React component for the image node view — enables Next.js <Image> with optimization
+// React component for the image node view
 function ImageNodeView({
   node,
   editor,
@@ -253,7 +330,8 @@ function ImageNodeView({
 
   const imgWidth = width && width !== "full" ? Number(width) : 200;
   const imgHeight = height && height !== "auto" ? Number(height) : 140;
-  const isUploading = !!uploading;
+  // Treat any __uploading__ src as uploading state
+  const isUploading = !!uploading || src?.startsWith("__uploading__");
   const isReadOnly = !editor.isEditable;
 
   const handleImageClick = (e: React.MouseEvent) => {
@@ -266,13 +344,17 @@ function ImageNodeView({
     }
   };
 
-  const changeAlignment = (newAlign: string) => {
+  const changeAlignment = (e: React.MouseEvent, newAlign: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (typeof getPos === "function") {
       editor.commands.updateAttributes("image", { align: newAlign });
     }
   };
 
-  const handleCaption = () => {
+  const handleCaption = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const newCaption = prompt("Enter image caption / alt text:", caption || "");
     if (newCaption !== null && typeof getPos === "function") {
       editor.commands.updateAttributes("image", {
@@ -310,18 +392,23 @@ function ImageNodeView({
     <NodeViewWrapper
       className="image-wrapper-container relative block w-full"
       data-align={align}
+      onClick={(e: React.MouseEvent) => e.stopPropagation()}
     >
       {/* Alignment toolbar — edit mode only */}
       {toolbarVisible && !isReadOnly && (
         <div
           className="absolute -top-12 left-0 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl z-50"
           contentEditable={false}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <button
             type="button"
             title="Align left"
             className={btnBase + (align === "left" ? btnActive : "")}
-            onClick={() => changeAlignment("left")}
+            onClick={(e) => changeAlignment(e, "left")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -343,7 +430,7 @@ function ImageNodeView({
             type="button"
             title="Align center"
             className={btnBase + (align === "center" ? btnActive : "")}
-            onClick={() => changeAlignment("center")}
+            onClick={(e) => changeAlignment(e, "center")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -365,7 +452,7 @@ function ImageNodeView({
             type="button"
             title="Align right"
             className={btnBase + (align === "right" ? btnActive : "")}
-            onClick={() => changeAlignment("right")}
+            onClick={(e) => changeAlignment(e, "right")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -387,7 +474,7 @@ function ImageNodeView({
             type="button"
             title="Full width"
             className={btnBase + (align === "full" ? btnActive : "")}
-            onClick={() => changeAlignment("full")}
+            onClick={(e) => changeAlignment(e, "full")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -410,7 +497,7 @@ function ImageNodeView({
             type="button"
             title="Add caption"
             className={btnBase + (caption ? btnActive : "")}
-            onClick={handleCaption}
+            onClick={(e) => handleCaption(e)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -434,7 +521,7 @@ function ImageNodeView({
       )}
 
       <div
-        className={`rounded-lg overflow-hidden ${isFull ? "w-full" : "relative"} ${alignClass} ${isReadOnly ? "cursor-zoom-in" : "cursor-pointer border border-gray-300"}`}
+        className={`rounded-lg overflow-hidden ${isFull ? "w-full" : "relative"} ${alignClass} ${isReadOnly ? "cursor-zoom-in" : "cursor-pointer"}`}
         style={containerStyle}
         onClick={handleImageClick}
       >
@@ -526,12 +613,15 @@ function ImageNodeView({
           style={{ backgroundColor: "black" }}
           onClick={() => setLightboxOpen(false)}
         >
-          {/* Close button — shadcn Button with lucide X, bold gray with border */}
           <Button
             type="button"
             variant="outline"
             size="icon"
-            onClick={() => setLightboxOpen(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setLightboxOpen(false);
+            }}
             className="absolute top-5 right-5 border-gray-500 bg-gray-700 hover:bg-gray-600 text-white hover:text-white"
             aria-label="Close"
           >
@@ -542,7 +632,6 @@ function ImageNodeView({
             className="flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Plain img so intrinsic size fills the viewport correctly */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
@@ -615,15 +704,9 @@ const tiptapImage = TiptapImage.extend({
     return ReactNodeViewRenderer(ImageNodeView);
   },
 }).configure({
-  allowBase64: false, // Disable base64, use MinIO instead
+  allowBase64: false,
   HTMLAttributes: {
-    class: cx("rounded-lg border border-gray-300"),
-  },
-});
-
-const updatedImage = UpdatedImage.configure({
-  HTMLAttributes: {
-    class: cx("rounded-lg border border-gray-300"),
+    class: cx("rounded-lg"),
   },
 });
 
@@ -669,7 +752,7 @@ const starterKit = StarterKit.configure({
       ),
     },
   },
-  codeBlock: false, // Disable default codeBlock, we'll use CodeBlockLowlight
+  codeBlock: false,
   code: {
     HTMLAttributes: {
       class: cx(
@@ -708,7 +791,7 @@ const codeBlockLowlight = CodeBlockLowlight.configure({
 });
 
 const tiptapLink = TiptapLink.extend({
-  inclusive: false, // This prevents link formatting from continuing when typing after the link
+  inclusive: false,
 }).configure({
   openOnClick: false,
   autolink: true,
@@ -759,6 +842,7 @@ const YouTubeExtension = Node.create({
       ],
     ];
   },
+
   addCommands() {
     return {
       setYouTubeVideo:
@@ -775,7 +859,7 @@ const YouTubeExtension = Node.create({
 
 export default YouTubeExtension;
 
-// Highlight Mark - Similar to Notion's Cmd+E (grey background with bold text)
+// Highlight Mark
 const HighlightMark = Mark.create({
   name: "highlight",
 
@@ -807,35 +891,15 @@ const HighlightMark = Mark.create({
 
   renderHTML({ HTMLAttributes }) {
     const color = HTMLAttributes["data-color"] || "grey";
-    let colorClass = "";
-
-    switch (color) {
-      case "grey":
-        colorClass = "bg-gray-200 text-gray-900";
-        break;
-      case "green":
-        colorClass = "bg-green-200 text-green-900";
-        break;
-      case "blue":
-        colorClass = "bg-blue-200 text-blue-900";
-        break;
-      case "orange":
-        colorClass = "bg-orange-200 text-orange-900";
-        break;
-      case "red":
-        colorClass = "bg-red-200 text-red-900";
-        break;
-      default:
-        colorClass = "bg-gray-200 text-gray-900";
-    }
+    const colorClass =
+      NOVEL_HIGHLIGHT_COLOR[color]?.class || NOVEL_HIGHLIGHT_COLOR.grey.class;
 
     return [
       "mark",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-highlight": "",
         class: `${colorClass} font-semibold rounded`,
-        style:
-          "padding: 0.125rem 0.125rem; box-decoration-break: clone; -webkit-box-decoration-break: clone;",
+        style: "padding: 0.125rem 0.125rem;",
       }),
       0,
     ];
@@ -846,19 +910,15 @@ const HighlightMark = Mark.create({
       toggleHighlight:
         (attributes) =>
         ({ commands, state }) => {
-          // Check if highlight mark is active
           const isActive = state.schema.marks["highlight"]?.isInSet(
             state.selection.$from.marks(),
           );
-
           if (isActive) {
-            // If highlight exists, remove it first then add new one with different color
             return (
               commands.unsetMark(this.name) &&
               commands.setMark(this.name, attributes)
             );
           } else {
-            // If no highlight, just add it
             return commands.setMark(this.name, attributes);
           }
         },
@@ -868,32 +928,39 @@ const HighlightMark = Mark.create({
   addKeyboardShortcuts() {
     return {
       "Mod-e": () => {
-        // If any highlight is active, toggle it off
         if (this.editor.isActive("highlight")) {
           return this.editor.commands.unsetMark("highlight");
         }
-        // Otherwise, apply grey highlight
         return this.editor.commands.setMark("highlight", { color: "grey" });
       },
-      // Press Space to exit highlight at the end
       Space: () => {
-        const { state } = this.editor;
-        const { selection } = state;
+        const { state, view } = this.editor;
+        const { selection, schema } = state;
         const { $from } = selection;
+        const highlightMark = schema.marks["highlight"];
+        if (!highlightMark || !selection.empty) return false;
 
-        // Check if we're at the end of a highlight mark
-        const highlight = state.schema.marks["highlight"]?.isInSet(
-          $from.marks(),
-        );
+        const highlight = highlightMark.isInSet($from.marks());
+        if (!highlight) return false;
 
-        if (highlight && selection.empty) {
-          // Insert a space and remove the highlight mark
-          this.editor.commands.insertContent(" ");
-          this.editor.commands.unsetMark("highlight");
-          return true;
-        }
+        // Only intercept at the end of a highlight span
+        const nodeAfter = $from.nodeAfter;
+        const isAtEnd = !nodeAfter || !highlightMark.isInSet(nodeAfter.marks);
+        if (!isAtEnd) return false;
 
-        return false;
+        // Insert a space without the highlight mark, then place cursor after it
+        const pos = $from.pos;
+        const tr = state.tr;
+        // Insert space as plain text (no stored marks)
+        tr.insertText(" ", pos, pos);
+        // Remove highlight from just that inserted character
+        tr.removeMark(pos, pos + 1, highlightMark);
+        // Place cursor after the space
+        tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+        // Clear stored marks so next typed char won't be highlighted
+        tr.setStoredMarks([]);
+        view.dispatch(tr);
+        return true;
       },
     };
   },
@@ -902,46 +969,26 @@ const HighlightMark = Mark.create({
 // Custom keyboard shortcuts for lists
 const ListKeymap = Extension.create({
   name: "listKeymap",
-  priority: 1000, // Higher priority
+  priority: 1000,
 
   addKeyboardShortcuts() {
     return {
       Tab: () => {
-        console.log("Tab pressed, checking list item...");
-        console.log("Is list item active:", this.editor.isActive("listItem"));
-        console.log("Can sink:", this.editor.can().sinkListItem("listItem"));
-
-        // Try to sink the list item
         const result = this.editor
           .chain()
           .focus()
           .sinkListItem("listItem")
           .run();
-        console.log("Sink result:", result);
-
-        if (result) {
-          return true;
-        }
-
-        // Even if we can't sink, prevent default if we're in a list
+        if (result) return true;
         return this.editor.isActive("listItem");
       },
       "Shift-Tab": () => {
-        console.log("Shift-Tab pressed, lifting list item...");
-
-        // Try to lift the list item
         const result = this.editor
           .chain()
           .focus()
           .liftListItem("listItem")
           .run();
-        console.log("Lift result:", result);
-
-        if (result) {
-          return true;
-        }
-
-        // Even if we can't lift, prevent default if we're in a list
+        if (result) return true;
         return this.editor.isActive("listItem");
       },
     };
@@ -954,7 +1001,6 @@ export const defaultExtensions = [
   placeholder,
   tiptapLink,
   tiptapImage,
-  updatedImage,
   taskList,
   taskItem,
   horizontalRule,
@@ -1042,15 +1088,6 @@ export const suggestionItems = createSuggestionItems([
       editor.chain().focus().deleteRange(range).toggleOrderedList().run();
     },
   },
-  // {
-  //   title: 'To-do List',
-  //   description: 'Track tasks with a to-do list.',
-  //   searchTerms: ['todo', 'task', 'list', 'check', 'checkbox'],
-  //   icon: <CheckSquare size={18} />,
-  //   command: ({ editor, range }) => {
-  //     editor.chain().focus().deleteRange(range).toggleTaskList().run();
-  //   },
-  // },
   {
     title: "Code Block",
     description: "Capture a code snippet.",
@@ -1146,7 +1183,6 @@ export const suggestionItems = createSuggestionItems([
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
 
-      // Create a simple dialog using divs
       const overlay = document.createElement("div");
       overlay.style.cssText =
         "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;";
@@ -1231,7 +1267,6 @@ export const suggestionItems = createSuggestionItems([
       addButton.onclick = () => {
         const text = textInput.value.trim();
         const href = urlInput.value.trim();
-
         if (text && href) {
           editor
             .chain()
@@ -1242,10 +1277,7 @@ export const suggestionItems = createSuggestionItems([
               marks: [
                 {
                   type: "link",
-                  attrs: {
-                    href: href,
-                    target: "_blank",
-                  },
+                  attrs: { href: href, target: "_blank" },
                 },
               ],
             })
@@ -1264,23 +1296,19 @@ export const suggestionItems = createSuggestionItems([
 
       buttonContainer.appendChild(cancelButton);
       buttonContainer.appendChild(addButton);
-
       dialog.appendChild(title);
       dialog.appendChild(textLabel);
       dialog.appendChild(textInput);
       dialog.appendChild(urlLabel);
       dialog.appendChild(urlInput);
       dialog.appendChild(buttonContainer);
-
       overlay.appendChild(dialog);
       overlay.onclick = (e) => {
         if (e.target === overlay) document.body.removeChild(overlay);
       };
-
       document.body.appendChild(overlay);
       textInput.focus();
 
-      // Handle Enter key
       const handleEnter = (e: KeyboardEvent) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -1300,17 +1328,18 @@ export const suggestionItems = createSuggestionItems([
     icon: <ImageIcon size={18} />,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
-      // Open file picker
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
       input.onchange = async (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
-          // Insert placeholder first
+          // Unique ID for this upload
+          const uploadId = `__uploading__${Date.now()}_${Math.random()}`;
+
           (editor.chain().focus() as any)
             .setImage({
-              src: UPLOAD_PLACEHOLDER_SRC,
+              src: uploadId,
               uploading: true,
               width: "full",
               height: "auto",
@@ -1320,20 +1349,20 @@ export const suggestionItems = createSuggestionItems([
             })
             .run();
 
-          // Find the placeholder position
-          let placeholderPos = -1;
-          editor.state.doc.descendants((node: any, pos: number) => {
-            if (
-              node.type.name === "image" &&
-              node.attrs.src === UPLOAD_PLACEHOLDER_SRC
-            ) {
-              placeholderPos = pos;
-            }
-          });
+          const findPlaceholder = () => {
+            let placeholderPos = -1;
+            editor.state.doc.descendants((node: any, pos: number) => {
+              if (node.type.name === "image" && node.attrs.src === uploadId) {
+                placeholderPos = pos;
+              }
+            });
+            return placeholderPos;
+          };
 
           try {
             const url = await uploadImage(file);
-            if (placeholderPos >= 0) {
+            const currentPos = findPlaceholder();
+            if (currentPos >= 0) {
               editor
                 .chain()
                 .focus()
@@ -1347,18 +1376,19 @@ export const suggestionItems = createSuggestionItems([
                     alt: "",
                     caption: "",
                   });
-                  tr.replaceWith(placeholderPos, placeholderPos + 1, node);
+                  tr.replaceWith(currentPos, currentPos + 1, node);
                   return true;
                 })
                 .run();
             }
           } catch (error) {
-            if (placeholderPos >= 0) {
+            const currentPos = findPlaceholder();
+            if (currentPos >= 0) {
               editor
                 .chain()
                 .focus()
                 .command(({ tr }: any) => {
-                  tr.delete(placeholderPos, placeholderPos + 1);
+                  tr.delete(currentPos, currentPos + 1);
                   return true;
                 })
                 .run();
@@ -1382,22 +1412,18 @@ export const suggestionItems = createSuggestionItems([
       editor.chain().focus().deleteRange(range).run();
       const url = prompt("Enter YouTube URL:");
       if (url) {
-        // Extract YouTube video ID from URL
         const match = url.match(
           /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
         );
         if (match && match[1]) {
           const videoId = match[1];
           const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          // Insert YouTube node
           editor
             .chain()
             .focus()
             .insertContent({
               type: "youtube",
-              attrs: {
-                src: embedUrl,
-              },
+              attrs: { src: embedUrl },
             })
             .run();
         } else {

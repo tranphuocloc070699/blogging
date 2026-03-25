@@ -12,12 +12,23 @@ import { useTermStore } from "@/store/term.store";
 import { ArrowLeft, Calendar, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useSession } from "next-auth/react";
 import resourceService from "@/services/modules/resource-service";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+const DRAFT_STORAGE_KEY = "post_draft_create";
 
 export interface PostFormData {
   title: string;
@@ -41,6 +52,10 @@ export default function UpsavePage() {
   // const [isSaving, setIsSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const pendingNavigationRef = useRef<(() => void) | null>(null);
+  const draftRestoredRef = useRef(false);
   const terms = useTermStore.getState().terms;
 
   const { data: session, status } = useSession();
@@ -112,6 +127,43 @@ export default function UpsavePage() {
 
     loadPost();
   }, [isEditMode, postId, router]);
+
+  // On mount (create mode only): check for saved draft
+  useEffect(() => {
+    if (isEditMode) {
+      draftRestoredRef.current = true;
+      return;
+    }
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!saved) {
+      draftRestoredRef.current = true;
+      return;
+    }
+    try {
+      const draft = JSON.parse(saved);
+      const hasContent = draft.title || draft.content || draft.excerpt;
+      if (hasContent) {
+        setShowRestoreDialog(true);
+      } else {
+        draftRestoredRef.current = true;
+      }
+    } catch {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      draftRestoredRef.current = true;
+    }
+  }, []);
+
+  // Auto-save draft to localStorage on form change (create mode only)
+  useEffect(() => {
+    if (isEditMode || !draftRestoredRef.current) return;
+    const hasContent = formData.title || formData.content || formData.excerpt;
+    if (hasContent) {
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({ ...formData, thumbnail }),
+      );
+    }
+  }, [formData, thumbnail]);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -271,6 +323,7 @@ export default function UpsavePage() {
         toast.success(`Post updated successfully!`);
       } else {
         await postService.createPost(accessToken, postData);
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
         toast.success(
           `Post ${formData.status === "DRAFT" ? "saved as draft" : "published"} successfully!`,
         );
@@ -312,7 +365,15 @@ export default function UpsavePage() {
       {/* Back Button */}
       <div className="absolute top-8 left-8 z-50">
         <button
-          onClick={() => router.push(routes.auth.posts.dashboard)}
+          onClick={() => {
+            if (!isEditMode && localStorage.getItem(DRAFT_STORAGE_KEY)) {
+              pendingNavigationRef.current = () =>
+                router.push(routes.auth.posts.dashboard);
+              setShowDiscardDialog(true);
+            } else {
+              router.push(routes.auth.posts.dashboard);
+            }
+          }}
           className="p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg border border-gray-200 transition-colors"
           aria-label="Go back"
         >
@@ -465,6 +526,77 @@ export default function UpsavePage() {
         postSlug={formData.slug}
         isEditMode={postId != null}
       />
+
+      {/* Restore draft dialog */}
+      <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restore unsaved draft?</DialogTitle>
+            <DialogDescription>
+              You have an unfinished post saved locally. Would you like to
+              continue where you left off?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                localStorage.removeItem(DRAFT_STORAGE_KEY);
+                draftRestoredRef.current = true;
+                setShowRestoreDialog(false);
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              onClick={() => {
+                try {
+                  const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+                  if (saved) {
+                    const draft = JSON.parse(saved);
+                    const { thumbnail: savedThumb, ...savedForm } = draft;
+                    setFormData((prev) => ({ ...prev, ...savedForm }));
+                    if (savedThumb) setThumbnail(savedThumb);
+                  }
+                } catch {}
+                draftRestoredRef.current = true;
+                setShowRestoreDialog(false);
+              }}
+            >
+              Restore
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Discard draft dialog (back button) */}
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Leave without saving?</DialogTitle>
+            <DialogDescription>
+              Your draft will be kept locally. You can restore it next time you
+              create a post.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDiscardDialog(false)}
+            >
+              Stay
+            </Button>
+            <Button
+              onClick={() => {
+                setShowDiscardDialog(false);
+                pendingNavigationRef.current?.();
+              }}
+            >
+              Leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MinimalLayout>
   );
 }
