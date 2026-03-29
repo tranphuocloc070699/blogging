@@ -78,6 +78,7 @@ export async function getPublishedPostsAction(
       thumbnail: post.thumbnail,
       publishedAt: post.publishedAt,
       likesCount: post._count.likes,
+      commentsCount: post._count.comments,
       isLiked: likedPostIds.has(post.id),
       terms: post.postTerms.map((pt) => ({
         id: pt.term.id,
@@ -113,6 +114,7 @@ export async function getPublishedPostBySlugAction(slug: string, userId?: number
       })),
       likesCount: post._count.likes,
       viewsCount: post._count.views,
+      commentsCount: post._count.comments,
       isLiked,
     };
   });

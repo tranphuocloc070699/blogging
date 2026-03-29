@@ -55,6 +55,7 @@ export async function getPublishedPostsPage(
       thumbnail: post.thumbnail ?? null,
       publishedAt: post.publishedAt,
       likesCount: post.likesCount,
+      commentsCount: post.commentsCount,
       isLiked: post.isLiked,
     })),
   };
@@ -105,6 +106,7 @@ export async function getPublishedPostBySlug(slug: string, userId?: number) {
     keywords: post.keywords ?? "",
     viewsCount: post.viewsCount,
     likesCount: post.likesCount,
+    commentsCount: post.commentsCount,
     isLiked: post.isLiked,
   } satisfies PostDto;
 }

@@ -283,6 +283,7 @@ export const postRepository = {
             select: {
               likes: true,
               views: true,
+              comments: true,
             },
           },
         },
@@ -325,6 +326,7 @@ export const postRepository = {
           select: {
             likes: true,
             views: true,
+            comments: true,
           },
         },
       },

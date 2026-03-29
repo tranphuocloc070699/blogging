@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, Share2 } from 'lucide-react'
+import { ArrowUp, Heart, MessageCircle, Share2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import postService from '@/services/modules/post-service';
 import { useRouter, usePathname } from 'next/navigation';
@@ -15,13 +15,15 @@ import {
 import { Button } from "@/components/ui";
 import { useSession } from 'next-auth/react';
 import { trackGa4Event } from "@/lib/ga4";
+import gsap from 'gsap';
 interface BlogPostActionProps {
 	postId: number;
 	initialLikesCount?: number;
 	initialIsLiked?: boolean;
+	initialCommentCount?: number;
 }
 
-const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false }: BlogPostActionProps) => {
+const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false, initialCommentCount = 0 }: BlogPostActionProps) => {
 	const { data: session } = useSession();
 	const [liked, setLiked] = useState(initialIsLiked);
 	const [likesCount, setLikesCount] = useState(initialLikesCount);
@@ -34,6 +36,9 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 	const [showShareModal, setShowShareModal] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
+	const heartBtnRef = useRef<HTMLButtonElement>(null);
+	const heartIconRef = useRef<HTMLDivElement>(null);
+	const particlesContainerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -62,6 +67,59 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 		};
 	}, []);
 
+	const animateLike = (isLiked: boolean) => {
+		// Pulse the heart icon
+		if (heartIconRef.current) {
+			gsap.fromTo(
+				heartIconRef.current,
+				{ scale: 1 },
+				{
+					scale: 1.5,
+					duration: 0.15,
+					ease: 'power2.out',
+					yoyo: true,
+					repeat: 1,
+				}
+			);
+		}
+
+		// Burst floating hearts only when liking (not unliking)
+		if (isLiked && particlesContainerRef.current) {
+			const container = particlesContainerRef.current;
+			const count = 8;
+
+			for (let i = 0; i < count; i++) {
+				const particle = document.createElement('div');
+				particle.innerHTML = '♥';
+				particle.style.cssText = `
+					position: absolute;
+					font-size: ${10 + Math.random() * 10}px;
+					color: ${['#ef4444', '#f97316', '#ec4899', '#e11d48'][Math.floor(Math.random() * 4)]};
+					pointer-events: none;
+					left: 50%;
+					top: 50%;
+					transform: translate(-50%, -50%);
+					opacity: 1;
+					user-select: none;
+				`;
+				container.appendChild(particle);
+
+				const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8;
+				const distance = 40 + Math.random() * 40;
+
+				gsap.to(particle, {
+					x: Math.cos(angle) * distance,
+					y: Math.sin(angle) * distance - 30,
+					opacity: 0,
+					scale: 0.3,
+					duration: 0.7 + Math.random() * 0.3,
+					ease: 'power2.out',
+					onComplete: () => particle.remove(),
+				});
+			}
+		}
+	};
+
 	const handleLike = async () => {
 		if (isLoading) return;
 
@@ -80,6 +138,7 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 				const nextLikesCount = response.body.data.likesCount;
 				setLiked(nextIsLiked);
 				setLikesCount(nextLikesCount);
+				animateLike(nextIsLiked);
 
 				trackGa4Event("post_like_toggled", {
 					post_id: postId,
@@ -94,7 +153,6 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 			}
 		} catch (error) {
 			console.error('Error toggling like:', error);
-			// Optionally show an error message to the user
 		} finally {
 			setIsLoading(false);
 		}
@@ -124,13 +182,28 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 			>
 				<div className="flex items-center gap-3 px-6 py-3 rounded-full bg-white shadow-lg border border-gray-200">
 					<button
+						ref={heartBtnRef}
 						onClick={handleLike}
 						disabled={isLoading}
-						className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+						className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed overflow-visible"
 						aria-label="Like post"
 					>
-						<Heart className={`w-5 h-5 ${liked ? 'fill-black text-black' : ''}`} />
+						<div ref={particlesContainerRef} className="absolute inset-0 pointer-events-none overflow-visible" />
+						<div ref={heartIconRef} className="flex items-center">
+							<Heart className={`w-5 h-5 transition-colors duration-200 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+						</div>
 						<span className="text-sm">{likesCount}</span>
+					</button>
+
+					<button
+						onClick={() => {
+							document.getElementById('discussion-section')?.scrollIntoView({ behavior: 'smooth' });
+						}}
+						className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 cursor-pointer"
+						aria-label="Go to comments"
+					>
+						<MessageCircle className="w-5 h-5" />
+						{initialCommentCount > 0 && <span className="text-sm">{initialCommentCount}</span>}
 					</button>
 
 					<button
@@ -139,6 +212,14 @@ const BlogPostAction = ({ postId, initialLikesCount = 0, initialIsLiked = false 
 						aria-label="Share post"
 					>
 						<Share2 className="w-5 h-5" />
+					</button>
+
+					<button
+						onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+						className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+						aria-label="Scroll to top"
+					>
+						<ArrowUp className="w-5 h-5" />
 					</button>
 				</div>
 			</div>

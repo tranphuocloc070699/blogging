@@ -1,10 +1,18 @@
 // lib/auth.ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Email from "next-auth/providers/nodemailer";
+import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { USER_ROLE } from "@/config/enums";
 import userService from "@/services/modules/user-service";
+import { buildMagicLinkEmail } from "@/lib/email-templates";
+import { createTransport } from "nodemailer";
 import "@/lib/envConfig";
+
+const prisma = new PrismaClient();
 
 async function refreshAccessToken(token: any) {
   try {
@@ -34,8 +42,65 @@ async function refreshAccessToken(token: any) {
   }
 }
 
+const adapter = PrismaAdapter(prisma);
+
+const customAdapter = {
+  ...adapter,
+  createUser: async (data: any) => {
+    const email = data.email ?? "";
+
+    // If user with this email already exists (e.g. registered via credentials),
+    // return the existing user so NextAuth links the new provider to it.
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return existing as any;
+
+    const username = email.split("@")[0] || `user_${Date.now().toString(36)}`;
+
+    // Strip fields not in our schema (e.g. `name`, `image` from Google)
+    const { name, image, ...rest } = data;
+    return (adapter.createUser as Function)({
+      ...rest,
+      username,
+      password: "",
+    });
+  },
+};
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: customAdapter,
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    Email({
+      server: {
+        host: process.env.SMTP_HOST,
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      },
+      from: process.env.SMTP_ADMIN_EMAIL,
+      async sendVerificationRequest({ identifier, url, provider }) {
+        const { host } = new URL(url);
+        const emailData = buildMagicLinkEmail({ email: identifier, url, host });
+        const transport = createTransport(provider.server as any);
+        const result = await transport.sendMail({
+          to: identifier,
+          from: provider.from,
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text,
+        });
+        const failed = result.rejected.concat(result.pending).filter(Boolean);
+        if (failed.length) {
+          throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`);
+        }
+      },
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -92,6 +157,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") return true;
+
+      // For OAuth/magic-link providers, auto-link to existing account with same email
+      if (account && user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+        if (existingUser) {
+          // Check if this provider is already linked
+          const existingAccount = await prisma.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+          });
+          // Link the provider account to the existing user if not already linked
+          if (!existingAccount) {
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                refresh_token: account.refresh_token ?? null,
+                access_token: account.access_token ?? null,
+                expires_at: account.expires_at ?? null,
+                token_type: account.token_type ?? null,
+                scope: account.scope ?? null,
+                id_token: account.id_token ?? null,
+                session_state: account.session_state
+                  ? String(account.session_state)
+                  : null,
+              },
+            });
+          }
+          // Set the user id to the existing user so the session is correct
+          user.id = String(existingUser.id);
+        }
+      }
+
+      return true;
+    },
+
     async jwt({ token, user }) {
       // First login
       if (user) {

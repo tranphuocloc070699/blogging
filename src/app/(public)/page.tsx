@@ -28,7 +28,7 @@ interface BlogPostsProps {
 
 async function BlogPosts({ page, search, tag }: BlogPostsProps) {
   try {
-    const response = await getPublishedPostsPage(page, search, tag, PUBLIC_POSTS_PAGE_SIZE);
+    const response = await getPublishedPostsPage(1, search, tag, PUBLIC_POSTS_PAGE_SIZE);
 
     return (
       <BlogPostList

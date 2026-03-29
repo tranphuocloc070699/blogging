@@ -144,7 +144,7 @@ const BlogPostFilterBar = () => {
             className={`transition-all duration-300 ${isMobileSearchOpen ? "w-0 opacity-0 overflow-hidden" : "flex-1  max-w-[220px]"}`}
           >
             <Select value={selectedTag} onValueChange={handleTagClick}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full rounded-full">
                 <SelectValue placeholder="Select tag" />
               </SelectTrigger>
               <SelectContent>

@@ -70,7 +70,7 @@ const BlogPostList = ({
   }, [currentPage, initialHasMore, initialPosts, search, tag]);
 
   useEffect(() => {
-    posts.slice(0, 5).forEach((post) => {
+    posts.forEach((post) => {
       router.prefetch(`/posts/${post.slug}`);
     });
   }, [posts, router]);
@@ -158,11 +158,7 @@ const BlogPostList = ({
         />
       ))}
       {hasMore && (
-        <LoadMore
-          currentPage={page}
-          isPending={isLoadingMore}
-          onLoadMore={handleLoadMore}
-        />
+        <LoadMore isPending={isLoadingMore} onLoadMore={handleLoadMore} />
       )}
     </div>
   );
