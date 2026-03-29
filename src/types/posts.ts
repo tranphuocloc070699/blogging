@@ -66,11 +66,12 @@ export interface PostDto {
   keywords: string;
   viewsCount?: number;
   likesCount?: number;
+  commentsCount?: number;
   isLiked?: boolean;
   isViewed?: boolean;
 }
 
-export type PostDashboardDto = Pick<PostDto, 'id' | 'slug' | 'thumbnail' | 'title' | 'excerpt' | 'publishedAt' | 'likesCount' | 'isLiked'>
+export type PostDashboardDto = Pick<PostDto, 'id' | 'slug' | 'thumbnail' | 'title' | 'excerpt' | 'publishedAt' | 'likesCount' | 'commentsCount' | 'isLiked'>
 
 export interface PostSummaryDto {
   id: number;

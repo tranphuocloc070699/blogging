@@ -4,6 +4,7 @@ import NovelEditorWrapper from "@/components/posts/novel-editor-wrapper";
 import BlogPostTags from "@/components/public/blog-posts/blog-post-tags";
 import BlogPostBreadcrumb from "@/components/public/blog-posts/blog-post-breadcrumb";
 import BlogPostAction from "@/components/public/blog-posts/blog-post-action";
+import BlogPostDiscussion from "@/components/public/blog-posts/blog-post-discussion";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlug } from "@/lib/public-posts";
 import { getAccessTokenFromCookie, verifyToken } from "@/lib/auth.util";
@@ -129,10 +130,14 @@ export default async function PostDetailPage({ params }: PageProps) {
             postId={post.id}
             initialLikesCount={post.likesCount}
             initialIsLiked={post.isLiked}
+            initialCommentCount={post.commentsCount}
           />
 
           {/* Tags at the bottom */}
           <BlogPostTags terms={post.terms} />
+
+          {/* Discussion / Comments */}
+          <BlogPostDiscussion postId={post.id} />
         </div>
       </main>
     </div>

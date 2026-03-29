@@ -1,4 +1,4 @@
-import { FolderTree, House, Newspaper, Tags, Users } from "lucide-react";
+import { FolderTree, House, MessageSquare, Newspaper, Tags, Users } from "lucide-react";
 import { JSX } from "react";
 
 type MenuItem = {
@@ -100,5 +100,10 @@ export const menuAdminItems : MenuItem[] = [
         href: "/auth/users/create",
       }
     ]
+  },
+  {
+    name: 'Comments',
+    href: '/auth/comments',
+    icon: <MessageSquare />,
   }
 ]

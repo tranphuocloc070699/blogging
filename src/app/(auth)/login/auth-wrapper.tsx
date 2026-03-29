@@ -64,8 +64,8 @@ function AuthHeader() {
         <Image
           alt="logo"
           src="/logo.svg"
-          width={60}
-          height={36}
+          width={32}
+          height={28}
           priority
           loading="eager"
         />

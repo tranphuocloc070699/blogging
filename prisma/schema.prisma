@@ -50,8 +50,9 @@ model Post {
   thumbnail       String?    @db.VarChar(255)
   keywords        String?    @db.VarChar(255)
   postTerms       PostTerm[]
-  views           PostView[] 
+  views           PostView[]
   likes           PostLike[]
+  comments        Comment[]
   author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posts_author")
 
   @@index([authorId], map: "idx_posts_author_id")
@@ -122,18 +123,108 @@ model Taxonomy {
   @@index([taxonomyId], map: "idx_terms_taxonomy_id")
   @@map("terms")
 }model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique @db.VarChar(50)
-  password  String   @db.VarChar(60)
-  email     String?  @unique @db.VarChar(100)
-  role      String?  @default("USER") @db.VarChar(20)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
-  posts     Post[]
-  views     PostView[]  
-  likes     PostLike[]
+  id            Int      @id @default(autoincrement())
+  username      String   @unique @db.VarChar(50)
+  password      String   @db.VarChar(60)
+  email         String?  @unique @db.VarChar(100)
+  emailVerified DateTime? @map("email_verified")
+  role          String?  @default("USER") @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  posts         Post[]
+  views         PostView[]
+  likes         PostLike[]
+  comments      Comment[]
+  commentLikes  CommentLike[]
+  accounts      Account[]
+  sessions      Session[]
 
   @@index([email], map: "idx_users_email")
   @@index([username], map: "idx_users_username")
   @@map("users")
+}
+
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int     @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique @map("session_token")
+  userId       Int      @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Comment {
+  id        Int           @id @default(autoincrement())
+  postId    Int           @map("post_id")
+  userId    Int           @map("user_id")
+  parentId  Int?          @map("parent_id")
+  content   String        @db.Text
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]     @relation("CommentReplies")
+  likes     CommentLike[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  commentId Int      @map("comment_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+  @@map("comment_likes")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(100)
+  token     String   @unique @db.VarChar(255)
+  expires   DateTime
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([email])
+  @@map("password_reset_tokens")
 }

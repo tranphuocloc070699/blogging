@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface LoadMoreProps {
-  currentPage: number;
   isPending: boolean;
   onLoadMore: () => void;
 }
 
-export default function LoadMore({ currentPage, isPending, onLoadMore }: LoadMoreProps) {
+export default function LoadMore({ isPending, onLoadMore }: LoadMoreProps) {
   return (
     <div className="flex items-center justify-center my-8">
       <Button
@@ -25,7 +24,7 @@ export default function LoadMore({ currentPage, isPending, onLoadMore }: LoadMor
             Loading...
           </>
         ) : (
-          `Load More ${currentPage + 1}`
+          `Load More`
         )}
       </Button>
     </div>

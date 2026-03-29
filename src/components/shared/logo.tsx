@@ -29,8 +29,8 @@ export default function Logo({ variant = "default", onBack }: LogoProps) {
       <Image
         src={"/logo.svg"}
         alt="logo"
-        width={60}
-        height={36}
+        width={32}
+        height={28}
         priority
         loading="eager"
       />
