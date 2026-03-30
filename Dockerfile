@@ -6,7 +6,8 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma
 
 RUN pnpm install
 
