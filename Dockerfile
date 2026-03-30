@@ -12,10 +12,12 @@ RUN pnpm install
 
 COPY . .
 
+RUN pnpm prisma generate --schema=prisma/schema/main.prisma
+
 RUN pnpm run build
 
 EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
-CMD ["sh", "-c", "node_modules/.bin/next start"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema=prisma/schema/main.prisma && node_modules/.bin/next start"]

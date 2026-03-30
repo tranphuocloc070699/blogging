@@ -6,9 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "migrate": "prisma migrate deploy",
+    "migrate": "prisma migrate deploy --schema=prisma/schema/main.prisma",
     "postinstall": "prisma generate",
-    "deploy": "prisma migrate deploy && next start"
+    "deploy": "prisma migrate deploy --schema=prisma/schema/main.prisma && next start"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
