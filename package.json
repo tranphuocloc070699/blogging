@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "migrate": "prisma migrate deploy --schema=prisma/schema/main.prisma",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate --schema=prisma/schema/main.prisma",
     "deploy": "prisma migrate deploy --schema=prisma/schema/main.prisma && next start"
   },
   "dependencies": {
