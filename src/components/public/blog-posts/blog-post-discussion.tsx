@@ -40,8 +40,44 @@ interface BlogPostDiscussionProps {
   initialCommentCount?: number;
 }
 
+const COMMENT_MAX_CHARS = 500;
+
 function getInitials(username: string) {
   return username.slice(0, 2).toUpperCase();
+}
+
+function CommentContent({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false);
+  // line-clamp-3 clips at 3 lines; we only show the toggle if content is long enough
+  // We use a ref to detect overflow after render
+  const pRef = useRef<HTMLParagraphElement>(null);
+  const [clamped, setClamped] = useState(false);
+
+  useEffect(() => {
+    const el = pRef.current;
+    if (el) {
+      setClamped(el.scrollHeight > el.clientHeight);
+    }
+  }, [content]);
+
+  return (
+    <div className="px-4 py-3 bg-white">
+      <p
+        ref={pRef}
+        className={`text-sm text-stone-700 whitespace-pre-wrap break-words ${!expanded ? "line-clamp-3" : ""}`}
+      >
+        {content}
+      </p>
+      {(clamped || expanded) && (
+        <button
+          onClick={() => setExpanded((p) => !p)}
+          className="mt-1 text-xs text-stone-400 hover:text-stone-600 transition-colors cursor-pointer"
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
+    </div>
+  );
 }
 
 function CommentItem({
@@ -130,11 +166,7 @@ function CommentItem({
             </span>
           </div>
           {/* Content — no background */}
-          <div className="px-4 py-3 bg-white">
-            <p className="text-sm text-stone-700 whitespace-pre-wrap break-words">
-              {comment.content}
-            </p>
-          </div>
+          <CommentContent content={comment.content} />
         </div>
 
         <div className="flex items-center gap-4 mt-1 ml-2">
@@ -267,16 +299,21 @@ function ReplyBox({
 
   return (
     <div className="mt-2 space-y-2">
-      <Textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Write a reply..."
-        className="text-sm resize-none min-h-[70px] bg-stone-50 border-stone-200 focus:border-stone-400"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
-        }}
-      />
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value.slice(0, COMMENT_MAX_CHARS))}
+          placeholder="Write a reply..."
+          className="text-sm resize-none min-h-[70px] bg-stone-50 border-stone-200 focus:border-stone-400"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
+          }}
+        />
+        <span className={`absolute bottom-2 right-2 text-xs ${content.length >= COMMENT_MAX_CHARS ? "text-red-400" : "text-stone-300"}`}>
+          {content.length}/{COMMENT_MAX_CHARS}
+        </span>
+      </div>
       <div className="flex gap-2 justify-end">
         <Button
           type="button"
@@ -419,11 +456,11 @@ export default function BlogPostDiscussion({
         <div className="flex-1 relative">
           <Textarea
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => setNewComment(e.target.value.slice(0, COMMENT_MAX_CHARS))}
             placeholder={
               session ? "Write a comment..." : "Sign in to join the discussion"
             }
-            className="text-sm resize-none min-h-[80px] bg-stone-50 border-stone-200 focus:border-stone-400 pr-12"
+            className="text-sm resize-none min-h-[80px] bg-stone-50 border-stone-200 focus:border-stone-400 pr-12 pb-6"
             onClick={() => {
               if (!session) setShowLoginModal(true);
             }}
@@ -432,6 +469,11 @@ export default function BlogPostDiscussion({
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
             }}
           />
+          {session && (
+            <span className={`absolute bottom-2 left-3 text-xs ${newComment.length >= COMMENT_MAX_CHARS ? "text-red-400" : "text-stone-300"}`}>
+              {newComment.length}/{COMMENT_MAX_CHARS}
+            </span>
+          )}
           <Button
             type="button"
             loading={submitting}
