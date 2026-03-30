@@ -4,7 +4,10 @@ import BlogPostFilterBar from "@/components/public/blog-posts/blog-post-filter-b
 import BlogPostListSkeleton from "@/components/public/blog-posts/blog-post-list-skeleton";
 import { Suspense } from "react";
 import { ErrorMessage } from "@/components/error-message";
-import { getPublishedPostsPage, PUBLIC_POSTS_PAGE_SIZE } from "@/lib/public-posts";
+import {
+  getPublishedPostsPage,
+  PUBLIC_POSTS_PAGE_SIZE,
+} from "@/lib/public-posts";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -28,7 +31,12 @@ interface BlogPostsProps {
 
 async function BlogPosts({ page, search, tag }: BlogPostsProps) {
   try {
-    const response = await getPublishedPostsPage(1, search, tag, PUBLIC_POSTS_PAGE_SIZE);
+    const response = await getPublishedPostsPage(
+      1,
+      search,
+      tag,
+      PUBLIC_POSTS_PAGE_SIZE,
+    );
 
     return (
       <BlogPostList
