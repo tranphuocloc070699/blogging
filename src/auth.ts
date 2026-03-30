@@ -9,6 +9,7 @@ import { z } from "zod";
 import { USER_ROLE } from "@/config/enums";
 import userService from "@/services/modules/user-service";
 import { buildMagicLinkEmail } from "@/lib/email-templates";
+import { generateAccessToken, generateRefreshToken } from "@/lib/auth.util";
 import { createTransport } from "nodemailer";
 import "@/lib/envConfig";
 
@@ -203,20 +204,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       // First login
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-          accessTokenExpires:
-            Date.now() +
-            parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || "3600") * 1000,
-        };
+        // Credentials provider: accessToken/refreshToken already on user object
+        if (account?.provider === "credentials") {
+          return {
+            ...token,
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            accessToken: user.accessToken,
+            refreshToken: user.refreshToken,
+            accessTokenExpires:
+              Date.now() +
+              parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || "3600") * 1000,
+          };
+        }
+
+        // OAuth / magic-link: fetch full user from DB and generate tokens
+        const dbUser = await prisma.user.findUnique({
+          where: { id: parseInt(user.id as string) },
+        });
+
+        if (dbUser) {
+          const accessToken = generateAccessToken(dbUser as any);
+          const refreshToken = generateRefreshToken(dbUser as any);
+          return {
+            ...token,
+            id: String(dbUser.id),
+            username: dbUser.username,
+            role: dbUser.role,
+            accessToken,
+            refreshToken,
+            accessTokenExpires:
+              Date.now() +
+              parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE || "3600") * 1000,
+          };
+        }
       }
 
       // If access token still valid

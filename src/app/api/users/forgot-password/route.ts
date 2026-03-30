@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       data: { email, token, expires },
     });
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
 
     const transport = createTransport({
       host: process.env.SMTP_HOST,
