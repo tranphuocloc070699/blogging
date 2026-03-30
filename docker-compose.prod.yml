@@ -51,7 +51,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: npx prisma migrate deploy --schema=prisma/schema/main.prisma
+    command: npx prisma migrate deploy
     restart: "no"
     networks:
       - blog-network
