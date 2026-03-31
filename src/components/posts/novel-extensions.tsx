@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import resourceService from "@/services/modules/resource-service";
 import { NOVEL_HIGHLIGHT_COLOR } from "@/config/enums";
+import CodeBlockView from "../block-code-view";
 
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common);
@@ -780,12 +781,14 @@ const starterKit = StarterKit.configure({
 });
 
 // Code block with syntax highlighting
-const codeBlockLowlight = CodeBlockLowlight.configure({
+const codeBlockLowlight = CodeBlockLowlight.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeBlockView);
+  },
+}).configure({
   lowlight,
   HTMLAttributes: {
-    class: cx(
-      "rounded-md bg-[#282c34] text-[#abb2bf] border border-gray-700 p-5 my-4 font-mono",
-    ),
+    class: cx("text-[#abb2bf]"),
   },
   defaultLanguage: "javascript",
 });
