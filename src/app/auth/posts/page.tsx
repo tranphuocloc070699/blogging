@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { routes } from "@/config/routes";
 import PostPageHeader from "@/components/posts/post-page-header";
-import { Button } from '@/components/ui';
-import postService from '@/services/modules/post-service';
-import { useClientSession } from '@/hooks/use-client-session';
+import { Button } from "@/components/ui";
+import postService from "@/services/modules/post-service";
+import { useClientSession } from "@/hooks/use-client-session";
 
 const pageHeader = {
-  title: 'Posts',
+  title: "Posts",
   breadcrumb: [
     {
       href: routes.auth.dashboard,
       name: "Dashboard",
     },
     {
-      name: 'Posts',
+      name: "Posts",
     },
   ],
 };
@@ -43,11 +43,11 @@ const PostsPage = () => {
 
   const loadPosts = async () => {
     try {
-      const { body } = await postService.getAllPosts();
-      setPosts(Array.isArray(body.data) ? body.data as PostSummary[] : []);
+      const { body } = await postService.getAllPosts({ size: 500 });
+      setPosts(Array.isArray(body.data) ? (body.data as PostSummary[]) : []);
     } catch (error) {
-      console.error('Failed to load posts:', error);
-      toast.error('Failed to load posts');
+      console.error("Failed to load posts:", error);
+      toast.error("Failed to load posts");
       setPosts([]);
     } finally {
       setLoading(false);
@@ -63,23 +63,23 @@ const PostsPage = () => {
   }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm("Are you sure you want to delete this post?")) return;
 
     try {
       await postService.deletePost(session!.accessToken ?? "", id);
-      setPosts(prev => prev.filter(p => p.id !== id));
-      toast.success('Post deleted successfully');
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Post deleted successfully");
     } catch (error) {
-      toast.error('Failed to delete post');
+      toast.error("Failed to delete post");
     }
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -128,17 +128,20 @@ const PostsPage = () => {
                       {posts.map((post) => (
                         <tr key={post.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm">
-                            <div className="font-medium text-gray-900">{post.title}</div>
+                            <div className="font-medium text-gray-900">
+                              {post.title}
+                            </div>
                             <div className="text-gray-500 text-xs mt-1 truncate max-w-md">
                               {post.excerpt}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${post.status === 'PUBLISHED'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                                }`}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                post.status === "PUBLISHED"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
                             >
                               {post.status}
                             </span>
@@ -151,12 +154,10 @@ const PostsPage = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                              >
-                                <Link href={`${routes.auth.posts.upsave}?id=${post.id}`}>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link
+                                  href={`${routes.auth.posts.upsave}?id=${post.id}`}
+                                >
                                   <Edit className="w-4 h-4" />
                                 </Link>
                               </Button>
