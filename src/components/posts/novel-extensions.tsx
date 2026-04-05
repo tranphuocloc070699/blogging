@@ -12,9 +12,9 @@ import {
   TiptapImage,
   TiptapLink,
 } from "novel";
-import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
+import { NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer } from "@tiptap/react";
 import NextImage from "next/image";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +36,16 @@ import {
   MessageSquarePlus,
   Quote,
   Youtube,
+  Table2,
+  ChevronDown,
+  Trash2,
+  ArrowRightFromLine,
+  ArrowDownFromLine,
 } from "lucide-react";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import resourceService from "@/services/modules/resource-service";
 import { NOVEL_HIGHLIGHT_COLOR } from "@/config/enums";
 import CodeBlockView from "../block-code-view";
@@ -998,6 +1007,130 @@ const ListKeymap = Extension.create({
   },
 });
 
+// ─── Table Cell NodeView ────────────────────────────────────────────────────
+
+type TableCellMenuEntry = {
+  label: string;
+  icon: React.ReactNode;
+  action: (editor: any) => void;
+  danger?: boolean;
+};
+
+function TableCellNodeView({ node, editor }: { node: any; editor: any; getPos: any }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const isHeader = node.type.name === "tableHeader";
+
+  const menuItems: TableCellMenuEntry[] = [
+    {
+      label: "Add column before",
+      icon: <ArrowRightFromLine size={14} className="rotate-180" />,
+      action: (ed) => ed.chain().focus().addColumnBefore().run(),
+    },
+    {
+      label: "Add column after",
+      icon: <ArrowRightFromLine size={14} />,
+      action: (ed) => ed.chain().focus().addColumnAfter().run(),
+    },
+    {
+      label: "Add row before",
+      icon: <ArrowDownFromLine size={14} className="rotate-180" />,
+      action: (ed) => ed.chain().focus().addRowBefore().run(),
+    },
+    {
+      label: "Add row after",
+      icon: <ArrowDownFromLine size={14} />,
+      action: (ed) => ed.chain().focus().addRowAfter().run(),
+    },
+    {
+      label: "Delete column",
+      icon: <Trash2 size={14} />,
+      action: (ed) => ed.chain().focus().deleteColumn().run(),
+      danger: true,
+    },
+    {
+      label: "Delete row",
+      icon: <Trash2 size={14} />,
+      action: (ed) => ed.chain().focus().deleteRow().run(),
+      danger: true,
+    },
+    {
+      label: "Delete table",
+      icon: <Trash2 size={14} />,
+      action: (ed) => ed.chain().focus().deleteTable().run(),
+      danger: true,
+    },
+  ];
+
+  const Tag = isHeader ? "th" : "td";
+
+  return (
+    <NodeViewWrapper as={Tag} className="relative border border-gray-300 p-2 min-w-[80px] align-top group">
+      {editor.isEditable && (
+        <div className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10" contentEditable={false}>
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); setMenuOpen((v) => !v); }}
+            className="w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-gray-100 border border-gray-200 shadow-sm text-gray-500"
+          >
+            <ChevronDown size={10} />
+          </button>
+
+          {menuOpen && (
+            <div
+              ref={menuRef}
+              className="absolute top-6 right-0 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+              onMouseLeave={() => setMenuOpen(false)}
+            >
+              {menuItems.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    item.action(editor);
+                    setMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 text-left ${item.danger ? "text-red-500 hover:bg-red-50" : "text-gray-700"}`}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      <NodeViewContent as="div" className="outline-none min-h-[1.2em]" />
+    </NodeViewWrapper>
+  );
+}
+
+const tableExtension = Table.configure({
+  resizable: true,
+  HTMLAttributes: { class: "border-collapse w-full my-4 table-fixed" },
+});
+
+const tableRowExtension = TableRow.configure({
+  HTMLAttributes: { class: "" },
+});
+
+const tableHeaderExtension = TableHeader.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(TableCellNodeView);
+  },
+}).configure({
+  HTMLAttributes: { class: "bg-gray-50 font-semibold text-left" },
+});
+
+const tableCellExtension = TableCell.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(TableCellNodeView);
+  },
+}).configure({
+  HTMLAttributes: { class: "" },
+});
+
 export const defaultExtensions = [
   starterKit,
   codeBlockLowlight,
@@ -1010,6 +1143,10 @@ export const defaultExtensions = [
   YouTubeExtension,
   HighlightMark,
   ListKeymap,
+  tableExtension,
+  tableRowExtension,
+  tableHeaderExtension,
+  tableCellExtension,
   GlobalDragHandle.configure({
     dragHandleWidth: 20,
   }),
@@ -1404,6 +1541,20 @@ export const suggestionItems = createSuggestionItems([
         }
       };
       input.click();
+    },
+  },
+  {
+    title: "Table",
+    description: "Insert a table.",
+    searchTerms: ["table", "grid", "spreadsheet"],
+    icon: <Table2 size={18} />,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run();
     },
   },
   {

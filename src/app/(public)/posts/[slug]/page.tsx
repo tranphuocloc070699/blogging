@@ -7,9 +7,8 @@ import BlogPostAction from "@/components/public/blog-posts/blog-post-action";
 import BlogPostDiscussion from "@/components/public/blog-posts/blog-post-discussion";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlug } from "@/lib/public-posts";
-import { getAccessTokenFromCookie, verifyToken } from "@/lib/auth.util";
 import { Separator } from "@/components/ui/separator";
-
+import { auth } from "@/auth";
 export function SeparatorDemo() {
   return (
     <div className="flex max-w-sm flex-col gap-4 text-sm">
@@ -81,8 +80,9 @@ export default async function PostDetailPage({ params }: PageProps) {
 
   try {
     const { slug } = await params;
-    const accessToken = await getAccessTokenFromCookie();
-    const userId = accessToken ? verifyToken(accessToken)?.userId : undefined;
+    const session = await auth();
+    const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
+
     post = await getPublishedPostBySlug(slug, userId);
   } catch (error) {
     console.error("Failed to load post detail:", error);

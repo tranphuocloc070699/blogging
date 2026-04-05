@@ -97,6 +97,7 @@ export const postRepository = {
     thumbnail?: string | null;
     keywords?: string | null;
     authorId: number;
+    publishedAt?: Date | null;
   }) {
     return prisma.post.create({
       data: {
@@ -109,7 +110,7 @@ export const postRepository = {
           : {}),
         status: data.status,
         authorId: data.authorId,
-        publishedAt: data.status === "PUBLISHED" ? new Date() : null,
+        publishedAt: data.publishedAt !== undefined ? data.publishedAt : (data.status === "PUBLISHED" ? new Date() : null),
         thumbnail: data.thumbnail,
         keywords: data.keywords,
         ...(data.termIds && data.termIds.length > 0
@@ -147,6 +148,7 @@ export const postRepository = {
       termIds?: number[];
       thumbnail?: string | null;
       keywords?: string | null;
+      publishedAt?: Date | null;
     },
   ) {
     const existing = await prisma.post.findUnique({ where: { id } });
@@ -176,12 +178,15 @@ export const postRepository = {
           ...(data.status !== undefined
             ? {
                 status: data.status,
-                ...(data.status === "PUBLISHED" &&
-                existing.status !== "PUBLISHED"
-                  ? { publishedAt: new Date() }
-                  : {}),
+                ...(data.publishedAt !== undefined
+                  ? { publishedAt: data.publishedAt }
+                  : data.status === "PUBLISHED" && existing.status !== "PUBLISHED"
+                    ? { publishedAt: new Date() }
+                    : {}),
               }
-            : {}),
+            : data.publishedAt !== undefined
+              ? { publishedAt: data.publishedAt }
+              : {}),
           ...(data.termIds !== undefined && data.termIds.length > 0
             ? {
                 postTerms: {

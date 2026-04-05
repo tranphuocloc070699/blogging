@@ -61,3 +61,4 @@ infras/
 skills-lock.json
 pnpm-lock.yaml
 logs
+package-lock.json

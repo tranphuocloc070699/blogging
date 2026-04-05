@@ -8,6 +8,7 @@ import {
   getPublishedPostsPage,
   PUBLIC_POSTS_PAGE_SIZE,
 } from "@/lib/public-posts";
+import { auth } from "@/auth";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -27,15 +28,17 @@ interface BlogPostsProps {
   page: number;
   search?: string;
   tag?: string;
+  userId?: number;
 }
 
-async function BlogPosts({ page, search, tag }: BlogPostsProps) {
+async function BlogPosts({ page, search, tag, userId }: BlogPostsProps) {
   try {
     const response = await getPublishedPostsPage(
       1,
       search,
       tag,
       PUBLIC_POSTS_PAGE_SIZE,
+      userId,
     );
 
     return (
@@ -58,6 +61,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const parsedPage = pageParam ? Number.parseInt(pageParam, 10) : 1;
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
+  const session = await auth();
+  const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
+
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-0">
       <BlogPostFilterBar />
@@ -65,7 +71,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         key={`${page}-${search}-${tag}`}
         fallback={<BlogPostListSkeleton />}
       >
-        <BlogPosts page={page} search={search} tag={tag} />
+        <BlogPosts page={page} search={search} tag={tag} userId={userId} />
       </Suspense>
     </div>
   );

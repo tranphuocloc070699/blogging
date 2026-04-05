@@ -28,14 +28,13 @@ export const getInitials = (fullName: string): string => {
   return '';
 };
 
- export const formatDate = (date: Date | null) => {
-                if (!date) return '';
-                // Use Intl.DateTimeFormat with explicit locale and timezone to ensure consistency
-                // between server and client rendering (prevents hydration mismatch)
-                const formatter = new Intl.DateTimeFormat('en-US', {
-                        day: 'numeric',
-                        month: 'long',
-                        timeZone: 'UTC' // Use UTC to ensure consistent formatting
-                });
-                return formatter.format(new Date(date));
-        };
+export const formatDate = (date: Date | null) => {
+  if (!date) return '';
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return formatter.format(new Date(date));
+};

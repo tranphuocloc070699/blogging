@@ -96,6 +96,7 @@ export interface CreatePostDto {
   // Thumbnail
   thumbnail?: string;
   keywords: string;
+  publishedAt?: string | null;
 }
 
 export interface UpdatePostDto {
@@ -110,6 +111,7 @@ export interface UpdatePostDto {
   // Thumbnail
   thumbnail?: string;
   keywords: string;
+  publishedAt?: string | null;
 }
 
 export interface CreateTaxonomyDto {

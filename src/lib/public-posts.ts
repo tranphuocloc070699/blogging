@@ -35,6 +35,7 @@ export async function getPublishedPostsPage(
   search?: string,
   tag?: string,
   pageSize = PUBLIC_POSTS_PAGE_SIZE,
+  userId?: number,
 ) {
   const data = await getPublishedPostsAction({
     page,
@@ -43,7 +44,7 @@ export async function getPublishedPostsPage(
     sortDir: "desc",
     search,
     tag,
-  });
+  }, userId);
 
   return {
     ...data,
@@ -62,11 +63,7 @@ export async function getPublishedPostsPage(
 }
 
 export async function getPublishedPostBySlug(slug: string, userId?: number) {
-  const post = await getPublishedPostBySlugAction(
-    slug,
-    userId,
-  );
-
+  const post = await getPublishedPostBySlugAction(slug, userId);
   if (!post) {
     return null;
   }
