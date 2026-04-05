@@ -51,6 +51,7 @@ class PostServerService {
       ...dto,
       authorId,
       keywords: dto.keywords,
+      publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : undefined,
     });
   }
 
@@ -59,6 +60,7 @@ class PostServerService {
       ...dto,
       status: dto.status as "DRAFT" | "PUBLISHED" | undefined,
       keywords: dto.keywords,
+      publishedAt: dto.publishedAt ? new Date(dto.publishedAt) : undefined,
     });
   }
 

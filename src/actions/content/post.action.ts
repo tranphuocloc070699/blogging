@@ -29,7 +29,8 @@ const getCachedPostById = unstable_cache(
 );
 
 const getCachedPublishedPosts = unstable_cache(
-  async (input: PublishedPostListInput) => postRepository.findPublishedPosts(input),
+  async (input: PublishedPostListInput) =>
+    postRepository.findPublishedPosts(input),
   ["posts-published-list"],
   {
     revalidate: CACHE_TTL_SECONDS,
@@ -53,7 +54,9 @@ export async function getAdminPostsAction(input: AdminPostListInput) {
 }
 
 export async function getPostByIdAction(id: number) {
-  return withMonitoredServerAction("post.getById", async () => getCachedPostById(id));
+  return withMonitoredServerAction("post.getById", async () =>
+    getCachedPostById(id),
+  );
 }
 
 export async function getPublishedPostsAction(
@@ -96,7 +99,10 @@ export async function getPublishedPostsAction(
   });
 }
 
-export async function getPublishedPostBySlugAction(slug: string, userId?: number) {
+export async function getPublishedPostBySlugAction(
+  slug: string,
+  userId?: number,
+) {
   return withMonitoredServerAction("post.getPublishedPostBySlug", async () => {
     const post = await getCachedPublishedPostBySlug(slug);
     if (!post) {
@@ -104,7 +110,11 @@ export async function getPublishedPostBySlugAction(slug: string, userId?: number
     }
 
     const isLiked =
-      userId !== undefined ? await postRepository.isLikedByUser(post.id, userId) : false;
+      userId !== undefined
+        ? await postRepository.isLikedByUser(post.id, userId)
+        : false;
+
+    console.log({ isLiked, userId });
 
     return {
       ...post,
@@ -131,6 +141,7 @@ export async function createPostAction(input: {
   thumbnail?: string | null;
   keywords?: string | null;
   authorId: number;
+  publishedAt?: Date | null;
 }) {
   return withMonitoredServerAction("post.create", async () => {
     const existing = await postRepository.findBySlug(input.slug);
@@ -158,6 +169,7 @@ export async function updatePostAction(
     termIds?: number[];
     thumbnail?: string | null;
     keywords?: string | null;
+    publishedAt?: Date | null;
   },
 ) {
   return withMonitoredServerAction("post.update", async () => {
@@ -232,4 +244,3 @@ export async function unpublishPostAction(id: number) {
     return { error: null, data: post };
   });
 }
-

@@ -9,7 +9,7 @@ import MinimalLayout from "@/layouts/minimal-layout";
 import { cn } from "@/lib/utils";
 import postService from "@/services/modules/post-service";
 import { useTermStore } from "@/store/term.store";
-import { ArrowLeft, Calendar, Upload, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -27,6 +27,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 
 const DRAFT_STORAGE_KEY = "post_draft_create";
 
@@ -39,6 +46,7 @@ export interface PostFormData {
   termIds: number[];
   status: "DRAFT" | "PUBLISHED";
   keywords: string;
+  publishedAt?: string | null;
 }
 
 export default function UpsavePage() {
@@ -49,6 +57,7 @@ export default function UpsavePage() {
 
   const [thumbnail, setThumbnail] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [publishedDate, setPublishedDate] = useState<Date>(new Date());
   // const [isSaving, setIsSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
@@ -104,6 +113,10 @@ export default function UpsavePage() {
 
         // Extract term IDs from post terms
 
+        if (post.publishedAt) {
+          setPublishedDate(new Date(post.publishedAt));
+        }
+
         setFormData({
           title: post.title,
           slug: post.slug,
@@ -113,6 +126,7 @@ export default function UpsavePage() {
           thumbnail: post.thumbnail,
           termIds: post.termIds,
           keywords: post.keywords,
+          publishedAt: post.publishedAt ?? null,
         });
 
         // setIsSlugManuallyEdited(true);
@@ -316,6 +330,14 @@ export default function UpsavePage() {
         ...formData,
         excerpt: finalExcerpt,
         thumbnail,
+        publishedAt: new Date(
+          publishedDate.getFullYear(),
+          publishedDate.getMonth(),
+          publishedDate.getDate(),
+          12,
+          0,
+          0,
+        ).toISOString(),
       };
 
       if (isEditMode && postId) {
@@ -402,18 +424,28 @@ export default function UpsavePage() {
             onFormDataChange={handleFormDataChange}
           />
 
-          {/* Meta Info - Date placeholder */}
+          {/* Publish Date Picker */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 pt-2">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>
-                {new Date().toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 px-0 h-auto font-normal text-sm text-gray-600 hover:text-gray-900 hover:bg-transparent"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {format(publishedDate, "MMMM d, yyyy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start">
+                <Calendar
+                  className="w-full"
+                  mode="single"
+                  selected={publishedDate}
+                  onSelect={(date) => date && setPublishedDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 

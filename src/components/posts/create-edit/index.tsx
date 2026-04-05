@@ -36,8 +36,7 @@ const postFormSchema = z.object({
   }),
   thumbnail: z.string().optional(),
   termIds: z.array(z.number()).optional(),
-  keywords: z
-    .string()
+  keywords: z.string(),
 });
 
 type PostFormData = z.infer<typeof postFormSchema>;
@@ -51,7 +50,7 @@ const defaultValues: PostFormData = {
   status: "DRAFT",
   thumbnail: "",
   termIds: [],
-  keywords: ""
+  keywords: "",
 };
 
 // Component mapping for sections
@@ -102,7 +101,8 @@ export default function CreateEditPost({
         router.push(routes.auth.posts.dashboard);
       }
     } catch (error: any) {
-      const errorMessage = error?.message || "Failed to save post. Please try again.";
+      const errorMessage =
+        error?.message || "Failed to save post. Please try again.";
       toast.error(errorMessage);
       console.error("Error saving post:", error);
     } finally {
@@ -119,11 +119,9 @@ export default function CreateEditPost({
 
   const handlePublish = async () => {
     if (slug) {
-
     } else {
       methods.setValue("status", "PUBLISHED");
     }
-
 
     await methods.handleSubmit(onSubmit)();
   };
@@ -137,17 +135,20 @@ export default function CreateEditPost({
           className="relative z-[19] [&_label.block>span]:font-medium"
         >
           <div className="pb-10 mb-10 space-y-8 first:mt-10">
-            {Object.entries(MAP_STEP_TO_COMPONENT).map(([key, Component], index) => (
-              <Element
-                key={key}
-                name={formParts[key as keyof typeof formParts]}
-                className={cn(
-                  index !== 0 && "border-t border-dashed border-gray-200 pt-8"
-                )}
-              >
-                <Component />
-              </Element>
-            ))}
+            {Object.entries(MAP_STEP_TO_COMPONENT).map(
+              ([key, Component], index) => (
+                <Element
+                  key={key}
+                  name={formParts[key as keyof typeof formParts]}
+                  className={cn(
+                    index !== 0 &&
+                      "border-t border-dashed border-gray-200 pt-8",
+                  )}
+                >
+                  <Component />
+                </Element>
+              ),
+            )}
           </div>
 
           {/* Form Footer */}

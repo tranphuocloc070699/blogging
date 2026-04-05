@@ -132,6 +132,7 @@ export async function getRefreshTokenFromCookie(): Promise<string | undefined> {
 
 export async function getAccessTokenFromCookie(): Promise<string | undefined> {
   const cookieStore = await cookies();
+  console.log({ cookieStore });
   return cookieStore.get("accessToken")?.value;
 }
 

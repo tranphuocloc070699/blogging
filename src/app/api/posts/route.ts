@@ -138,7 +138,8 @@ export async function POST(request: NextRequest) {
       status,
       termIds,
       thumbnail,
-      keywords
+      keywords,
+      publishedAt,
     } = body;
 
     // Validation
@@ -157,6 +158,7 @@ export async function POST(request: NextRequest) {
       termIds,
       thumbnail,
       keywords,
+      publishedAt: publishedAt ?? undefined,
     });
 
     if (error === "DUPLICATE_SLUG") {
