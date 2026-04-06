@@ -39,6 +39,18 @@ const BlogPostAction = ({
   const rafRef = useRef<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
+
+  useEffect(() => {
+    const handleCommentCountChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ count: number }>).detail;
+      setCommentCount(detail.count);
+    };
+    window.addEventListener("comment-count-changed", handleCommentCountChange);
+    return () => {
+      window.removeEventListener("comment-count-changed", handleCommentCountChange);
+    };
+  }, []);
   const router = useRouter();
   const pathname = usePathname();
   const heartBtnRef = useRef<HTMLButtonElement>(null);
@@ -150,6 +162,8 @@ const BlogPostAction = ({
         setLiked(nextIsLiked);
         setLikesCount(nextLikesCount);
         animateLike(nextIsLiked);
+        // Invalidate router cache so home page shows fresh counts on next navigation
+        router.refresh();
 
         trackGa4Event("post_like_toggled", {
           post_id: postId,
@@ -275,8 +289,8 @@ const BlogPostAction = ({
             aria-label="Go to comments"
           >
             <MessageCircle className="w-5 h-5" />
-            {initialCommentCount > 0 && (
-              <span className="text-sm">{initialCommentCount}</span>
+            {commentCount > 0 && (
+              <span className="text-sm">{commentCount}</span>
             )}
           </button>
 

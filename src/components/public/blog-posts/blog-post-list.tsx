@@ -75,6 +75,19 @@ const BlogPostList = ({
     });
   }, [posts, router]);
 
+  // Refresh server data when navigating back so likesCount / isLiked are up-to-date
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [router]);
+
   useEffect(() => {
     if (currentPage <= 1) {
       return;

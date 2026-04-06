@@ -360,6 +360,12 @@ export default function BlogPostDiscussion({
     fetchComments();
   }, [postId]);
 
+  const dispatchCommentCount = (count: number) => {
+    window.dispatchEvent(
+      new CustomEvent("comment-count-changed", { detail: { count } }),
+    );
+  };
+
   const fetchComments = async () => {
     setLoading(true);
     try {
@@ -370,6 +376,7 @@ export default function BlogPostDiscussion({
         const data = await res.json();
         setComments(data.data.comments);
         setTotalComments(data.data.totalComments);
+        dispatchCommentCount(data.data.totalComments);
       }
     } finally {
       setLoading(false);
@@ -395,7 +402,11 @@ export default function BlogPostDiscussion({
       if (res.ok) {
         const data = await res.json();
         setComments((prev) => [data.data, ...prev]);
-        setTotalComments((prev) => prev + 1);
+        setTotalComments((prev) => {
+          const next = prev + 1;
+          dispatchCommentCount(next);
+          return next;
+        });
         setNewComment("");
         trackGa4Event("post_comment_added", { post_id: postId });
       }
@@ -410,7 +421,11 @@ export default function BlogPostDiscussion({
         c.id === parentId ? { ...c, replies: [...c.replies, newReply] } : c,
       ),
     );
-    setTotalComments((prev) => prev + 1);
+    setTotalComments((prev) => {
+      const next = prev + 1;
+      dispatchCommentCount(next);
+      return next;
+    });
   };
 
   const handleCommentDeleted = (commentId: number, parentId?: number) => {
@@ -429,7 +444,11 @@ export default function BlogPostDiscussion({
     } else {
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     }
-    setTotalComments((prev) => Math.max(0, prev - 1));
+    setTotalComments((prev) => {
+      const next = Math.max(0, prev - 1);
+      dispatchCommentCount(next);
+      return next;
+    });
   };
 
   return (
