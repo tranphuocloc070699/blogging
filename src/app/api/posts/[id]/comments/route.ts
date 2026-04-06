@@ -10,6 +10,8 @@ import {
 } from "@/lib/response";
 import { NextRequest } from "next/server";
 import { createTransport } from "nodemailer";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -154,6 +156,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         console.error("Failed to send reply notification email:", emailError);
       }
     }
+
+    // Invalidate cached post data so commentsCount reflects the new value
+    revalidateTag(CACHE_TAGS.posts, "max");
+    revalidateTag(CACHE_TAGS.postSlug(post.slug), "max");
 
     return successResponse(
       {

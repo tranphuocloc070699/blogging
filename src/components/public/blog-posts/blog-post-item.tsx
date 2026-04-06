@@ -74,7 +74,7 @@ const BlogPostItem = ({
               <div className="flex items-center gap-1">
                 <Heart
                   className={`w-3 h-3 md:w-4 md:h-4 ${
-                    post.isLiked ? "fill-red-500 text-black" : ""
+                    post.isLiked ? "fill-red-500 text-red-500" : ""
                   }`}
                 />
                 <span>{post.likesCount || 0}</span>

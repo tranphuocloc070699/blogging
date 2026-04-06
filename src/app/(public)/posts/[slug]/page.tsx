@@ -6,27 +6,9 @@ import BlogPostBreadcrumb from "@/components/public/blog-posts/blog-post-breadcr
 import BlogPostAction from "@/components/public/blog-posts/blog-post-action";
 import BlogPostDiscussion from "@/components/public/blog-posts/blog-post-discussion";
 import { notFound } from "next/navigation";
-import { getPublishedPostBySlug } from "@/lib/public-posts";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/auth";
 import postService from "@/services/modules/post-service";
-export function SeparatorDemo() {
-  return (
-    <div className="flex max-w-sm flex-col gap-4 text-sm">
-      <div className="flex flex-col gap-1.5">
-        <div className="leading-none font-medium">shadcn/ui</div>
-        <div className="text-muted-foreground">
-          The Foundation for your Design System
-        </div>
-      </div>
-      <Separator />
-      <div>
-        A set of beautifully designed components that you can customize, extend,
-        and build on.
-      </div>
-    </div>
-  );
-}
 
 interface PageProps {
   params: {
@@ -40,7 +22,8 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const post = await getPublishedPostBySlug(slug);
+    const { body } = await postService.getPostBySlug(slug);
+    const post = body.data;
     if (!post) {
       return {
         title: "Post Not Found",
@@ -82,9 +65,10 @@ export default async function PostDetailPage({ params }: PageProps) {
   try {
     const { slug } = await params;
     const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
+    const accessToken = (session as any)?.accessToken as string | undefined;
 
-    post = await postService.getPostBySlug(slug, userId);
+    const { body } = await postService.getPostBySlug(slug, accessToken);
+    post = body.data;
   } catch (error) {
     console.error("Failed to load post detail:", error);
     notFound();
@@ -120,13 +104,11 @@ export default async function PostDetailPage({ params }: PageProps) {
               <NovelEditorWrapper
                 value={post.content}
                 readOnly
-                // className="pointer-events-none"
               />
             </div>
           </article>
 
           {/* Fixed Like and Share buttons at bottom */}
-
           <BlogPostAction
             postId={post.id}
             initialLikesCount={post.likesCount}

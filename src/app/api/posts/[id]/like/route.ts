@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { errorResponse, forbiddenResponse, notFoundResponse, successResponse } from "@/lib/response";
 import { NextRequest } from "next/server";
 import { RouteParams } from "../route";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 // PUT /api/posts/[id]/like - Toggle like post
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -67,6 +69,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
                 likesCount = await prisma.postLike.count({
                         where: { postId },
                 });
+
+                // Invalidate cached post data so likesCount reflects the new value
+                revalidateTag(CACHE_TAGS.posts, "max");
+                revalidateTag(CACHE_TAGS.postSlug(existingPost.slug), "max");
 
                 return successResponse(
                         {
