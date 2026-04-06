@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { getPublishedPostBySlug } from "@/lib/public-posts";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/auth";
+import postService from "@/services/modules/post-service";
 export function SeparatorDemo() {
   return (
     <div className="flex max-w-sm flex-col gap-4 text-sm">
@@ -83,7 +84,7 @@ export default async function PostDetailPage({ params }: PageProps) {
     const session = await auth();
     const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
 
-    post = await getPublishedPostBySlug(slug, userId);
+    post = await postService.getPostBySlug(slug, userId);
   } catch (error) {
     console.error("Failed to load post detail:", error);
     notFound();
