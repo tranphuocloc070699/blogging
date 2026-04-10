@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { Heart, Send, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Heart, Send, ChevronDown, ChevronUp, Trash2, Star } from "lucide-react";
 import { trackGa4Event } from "@/lib/ga4";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui";
@@ -174,8 +174,8 @@ function CommentItem({
             onClick={handleLike}
             className="flex items-center gap-1 text-xs text-stone-500 hover:text-red-500 transition-colors cursor-pointer"
           >
-            <Heart
-              className={`w-3.5 h-3.5 ${liked ? "fill-red-500 text-red-500" : ""}`}
+            <Star
+              className={`w-3.5 h-3.5 ${liked ? "fill-yellow-500 text-yellow-500" : ""}`}
             />
             <span>{likesCount > 0 ? likesCount : ""}</span>
           </button>
@@ -435,9 +435,9 @@ export default function BlogPostDiscussion({
         prev.map((c) =>
           c.id === parentId
             ? {
-                ...c,
-                replies: (c.replies ?? []).filter((r) => r.id !== commentId),
-              }
+              ...c,
+              replies: (c.replies ?? []).filter((r) => r.id !== commentId),
+            }
             : c,
         ),
       );

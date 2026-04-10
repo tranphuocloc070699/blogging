@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Heart, MessageCircle, Share2 } from "lucide-react";
+import { ArrowUp, Heart, MessageCircle, MessageSquare, Share2, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import postService from "@/services/modules/post-service";
 import { useRouter, usePathname } from "next/navigation";
@@ -253,11 +253,10 @@ const BlogPostAction = ({
   return (
     <>
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
-          showActions
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-20 pointer-events-none"
-        }`}
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${showActions
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-20 pointer-events-none"
+          }`}
       >
         <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-white shadow-lg border border-gray-200">
           <button
@@ -272,8 +271,8 @@ const BlogPostAction = ({
               className="absolute inset-0 pointer-events-none overflow-visible"
             />
             <div ref={heartIconRef} className="flex items-center">
-              <Heart
-                className={`w-5 h-5 transition-colors duration-200 ${liked ? "fill-red-500 text-red-500" : ""}`}
+              <Star
+                className={`w-5 h-5 transition-colors duration-200 ${liked ? "fill-yellow-500 text-yellow-500" : ""}`}
               />
             </div>
             <span className="text-sm">{likesCount}</span>
@@ -288,7 +287,7 @@ const BlogPostAction = ({
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 cursor-pointer"
             aria-label="Go to comments"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageSquare className="w-5 h-5" />
             {commentCount > 0 && (
               <span className="text-sm">{commentCount}</span>
             )}

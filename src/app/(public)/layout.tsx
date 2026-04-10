@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 import Header from "@/components/public/header";
+import ChatWidget from "@/components/chat/chat-widget";
+import Assistant from "@/components/chat/assistant";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export const metadata: Metadata = {
   title: {
@@ -29,7 +32,11 @@ export default function PublicLayout({
   return (
     <div className="min-h-screen md:space-y-20 space-y-10 editor-command-list-scrollbar">
       <Header />
-      <main>{children}</main>
+      <TooltipProvider>
+        <main>{children}</main>
+        <Assistant />
+      </TooltipProvider>
+
     </div>
   );
 }
