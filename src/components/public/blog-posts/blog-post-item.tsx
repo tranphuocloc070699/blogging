@@ -1,7 +1,7 @@
 "use client";
 import { formatDate } from "@/lib/string-util";
 import { PostDashboardDto } from "@/types/posts";
-import { Check, Heart, MessageCircle } from "lucide-react";
+import { Check, Heart, MessageCircle, MessageSquare, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ const BlogPostItem = ({
 
         {/* Content */}
         <div className="flex flex-col flex-1 min-w-0">
-          <h2 className="font-semibold text-base md:text-xl line-clamp-2 text-black group-hover:text-gray-600 transition-colors leading-snug pb-0">
+          <h2 className="font-medium text-base md:text-xl line-clamp-2 text-black group-hover:text-gray-600 transition-colors leading-snug pb-0">
             {post.title}
           </h2>
           <p className="text-xs md:text-sm text-gray-500 line-clamp-2 leading-5 mt-0">
@@ -68,20 +68,19 @@ const BlogPostItem = ({
 
           {/* Footer - Date, Likes, Read Status */}
           <div className="flex items-center justify-between flex-wrap gap-2 mt-auto pt-2">
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+            <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>{formatDate(post.publishedAt)}</span>
               <span>•</span>
               <div className="flex items-center gap-1">
-                <Heart
-                  className={`w-3 h-3 md:w-4 md:h-4 ${
-                    post.isLiked ? "fill-red-500 text-red-500" : ""
-                  }`}
+                <Star
+                  className={`w-3 h-3 md:w-4 md:h-4 ${post.isLiked ? "fill-yellow-500 text-yellow-500" : ""
+                    }`}
                 />
                 <span>{post.likesCount || 0}</span>
               </div>
               {post?.commentsCount != undefined && post.commentsCount > 0 ? (
                 <div className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3 md:w-4 md:h-4" />
+                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
                   <span>{post.commentsCount}</span>
                 </div>
               ) : (

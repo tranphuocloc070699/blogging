@@ -31,7 +31,7 @@ export default function UserProfile() {
     return (
       <span>
         <Link href={"/profile"} className="space-x-2">
-          <Button className="rounded-full w-8 h-8">
+          <Button size={"icon"} className="rounded-full">
             <UserIcon />
           </Button>
           <span className="font-medium">{session?.user?.username}</span>

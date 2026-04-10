@@ -39,8 +39,9 @@ import {
   Table2,
   ChevronDown,
   Trash2,
-  ArrowRightFromLine,
-  ArrowDownFromLine,
+  PlusCircle,
+  Columns2,
+  Rows2,
 } from "lucide-react";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
@@ -646,7 +647,7 @@ function ImageNodeView({
             <img
               src={src}
               alt={alt || ""}
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded-sm"
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded-sm "
             />
             {caption && (
               <p className="text-center text-white/60 text-sm mt-3">
@@ -859,12 +860,12 @@ const YouTubeExtension = Node.create({
     return {
       setYouTubeVideo:
         (options: { src: string }) =>
-        ({ commands }: any) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: options,
-          });
-        },
+          ({ commands }: any) => {
+            return commands.insertContent({
+              type: this.name,
+              attrs: options,
+            });
+          },
     };
   },
 });
@@ -921,19 +922,19 @@ const HighlightMark = Mark.create({
     return {
       toggleHighlight:
         (attributes) =>
-        ({ commands, state }) => {
-          const isActive = state.schema.marks["highlight"]?.isInSet(
-            state.selection.$from.marks(),
-          );
-          if (isActive) {
-            return (
-              commands.unsetMark(this.name) &&
-              commands.setMark(this.name, attributes)
+          ({ commands, state }) => {
+            const isActive = state.schema.marks["highlight"]?.isInSet(
+              state.selection.$from.marks(),
             );
-          } else {
-            return commands.setMark(this.name, attributes);
-          }
-        },
+            if (isActive) {
+              return (
+                commands.unsetMark(this.name) &&
+                commands.setMark(this.name, attributes)
+              );
+            } else {
+              return commands.setMark(this.name, attributes);
+            }
+          },
     };
   },
 
@@ -1009,106 +1010,198 @@ const ListKeymap = Extension.create({
 
 // ─── Table Cell NodeView ────────────────────────────────────────────────────
 
-type TableCellMenuEntry = {
-  label: string;
-  icon: React.ReactNode;
-  action: (editor: any) => void;
-  danger?: boolean;
-};
-
 function TableCellNodeView({ node, editor }: { node: any; editor: any; getPos: any }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isHeader = node.type.name === "tableHeader";
-
-  const menuItems: TableCellMenuEntry[] = [
-    {
-      label: "Add column before",
-      icon: <ArrowRightFromLine size={14} className="rotate-180" />,
-      action: (ed) => ed.chain().focus().addColumnBefore().run(),
-    },
-    {
-      label: "Add column after",
-      icon: <ArrowRightFromLine size={14} />,
-      action: (ed) => ed.chain().focus().addColumnAfter().run(),
-    },
-    {
-      label: "Add row before",
-      icon: <ArrowDownFromLine size={14} className="rotate-180" />,
-      action: (ed) => ed.chain().focus().addRowBefore().run(),
-    },
-    {
-      label: "Add row after",
-      icon: <ArrowDownFromLine size={14} />,
-      action: (ed) => ed.chain().focus().addRowAfter().run(),
-    },
-    {
-      label: "Delete column",
-      icon: <Trash2 size={14} />,
-      action: (ed) => ed.chain().focus().deleteColumn().run(),
-      danger: true,
-    },
-    {
-      label: "Delete row",
-      icon: <Trash2 size={14} />,
-      action: (ed) => ed.chain().focus().deleteRow().run(),
-      danger: true,
-    },
-    {
-      label: "Delete table",
-      icon: <Trash2 size={14} />,
-      action: (ed) => ed.chain().focus().deleteTable().run(),
-      danger: true,
-    },
-  ];
-
   const Tag = isHeader ? "th" : "td";
 
+  // Close menu on outside click
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
+
   return (
-    <NodeViewWrapper as={Tag} className="relative border border-gray-300 p-2 min-w-[80px] align-top group">
+    <NodeViewWrapper
+      as={Tag}
+      className="relative border border-gray-200 p-2 min-w-[80px] align-top group"
+    >
       {editor.isEditable && (
-        <div className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10" contentEditable={false}>
+        <div
+          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          contentEditable={false}
+        >
+          {/* Cell options button */}
           <button
             type="button"
-            onMouseDown={(e) => { e.preventDefault(); setMenuOpen((v) => !v); }}
-            className="w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-gray-100 border border-gray-200 shadow-sm text-gray-500"
+            title="Cell options"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setMenuOpen((v) => !v);
+            }}
+            className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
           >
-            <ChevronDown size={10} />
+            <ChevronDown size={12} />
           </button>
 
           {menuOpen && (
             <div
               ref={menuRef}
-              className="absolute top-6 right-0 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
-              onMouseLeave={() => setMenuOpen(false)}
+              className="absolute top-6 right-0 w-52 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 text-xs"
             >
-              {menuItems.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    item.action(editor);
-                    setMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 text-left ${item.danger ? "text-red-500 hover:bg-red-50" : "text-gray-700"}`}
-                >
-                  {item.icon}
-                  {item.label}
-                </button>
-              ))}
+              {/* Column section */}
+              <div className="px-2.5 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Column
+              </div>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().addColumnBefore().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 text-gray-700 text-left"
+              >
+                <Columns2 size={13} className="text-gray-400 rotate-180 scale-x-[-1]" />
+                Insert column left
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().addColumnAfter().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 text-gray-700 text-left"
+              >
+                <Columns2 size={13} className="text-gray-400" />
+                Insert column right
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().deleteColumn().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-red-50 text-red-500 text-left"
+              >
+                <Trash2 size={13} />
+                Delete column
+              </button>
+
+              {/* Divider */}
+              <div className="my-1 border-t border-gray-100" />
+
+              {/* Row section */}
+              <div className="px-2.5 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Row
+              </div>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().addRowBefore().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 text-gray-700 text-left"
+              >
+                <Rows2 size={13} className="text-gray-400 rotate-180" />
+                Insert row above
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().addRowAfter().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 text-gray-700 text-left"
+              >
+                <Rows2 size={13} className="text-gray-400" />
+                Insert row below
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().deleteRow().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-red-50 text-red-500 text-left"
+              >
+                <Trash2 size={13} />
+                Delete row
+              </button>
+
+              {/* Divider */}
+              <div className="my-1 border-t border-gray-100" />
+
+              {/* Table section */}
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editor.chain().focus().deleteTable().run();
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-red-50 text-red-500 text-left"
+              >
+                <Trash2 size={13} />
+                Delete table
+              </button>
             </div>
           )}
         </div>
       )}
+
+      {/* Add column button (right edge, header only) */}
+      {editor.isEditable && isHeader && (
+        <button
+          type="button"
+          title="Add column after"
+          contentEditable={false}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().addColumnAfter().run();
+          }}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white border border-gray-300 shadow-sm text-gray-400 hover:text-blue-500 hover:border-blue-400 opacity-0 group-hover:opacity-100 transition-all z-20"
+        >
+          <PlusCircle size={12} />
+        </button>
+      )}
+
       <NodeViewContent as="div" className="outline-none min-h-[1.2em]" />
+
+      {/* Add row button (bottom edge) */}
+      {editor.isEditable && (
+        <button
+          type="button"
+          title="Add row below"
+          contentEditable={false}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().addRowAfter().run();
+          }}
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white border border-gray-300 shadow-sm text-gray-400 hover:text-blue-500 hover:border-blue-400 opacity-0 group-hover:opacity-100 transition-all z-20"
+        >
+          <PlusCircle size={12} />
+        </button>
+      )}
     </NodeViewWrapper>
   );
 }
 
 const tableExtension = Table.configure({
   resizable: true,
-  HTMLAttributes: { class: "border-collapse w-full my-4 table-fixed" },
+  HTMLAttributes: { class: "border-collapse w-full my-6 table-fixed rounded-lg overflow-hidden" },
 });
 
 const tableRowExtension = TableRow.configure({
@@ -1120,7 +1213,7 @@ const tableHeaderExtension = TableHeader.extend({
     return ReactNodeViewRenderer(TableCellNodeView);
   },
 }).configure({
-  HTMLAttributes: { class: "bg-gray-50 font-semibold text-left" },
+  HTMLAttributes: { class: "bg-gray-50 font-semibold text-left text-sm text-gray-600" },
 });
 
 const tableCellExtension = TableCell.extend({
@@ -1128,7 +1221,7 @@ const tableCellExtension = TableCell.extend({
     return ReactNodeViewRenderer(TableCellNodeView);
   },
 }).configure({
-  HTMLAttributes: { class: "" },
+  HTMLAttributes: { class: "text-sm" },
 });
 
 export const defaultExtensions = [
