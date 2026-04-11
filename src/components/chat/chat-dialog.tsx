@@ -1,20 +1,21 @@
-import { ComponentProps, FC } from 'react'
+import { ComponentProps, FC, useEffect, useRef } from 'react'
 import { motion } from "motion/react"
 import {
     ActionBarPrimitive,
     AuiIf,
+    BranchPickerPrimitive,
     ComposerPrimitive,
     ErrorPrimitive,
     MessagePrimitive,
+    SuggestionPrimitive,
     TextMessagePart,
     ThreadPrimitive,
     useAuiState,
-    useMessage,
 } from "@assistant-ui/react";
-import { ArrowDownIcon, ArrowUpIcon, Loader2, Maximize2, Minimize2, PencilIcon, Sparkles, SquareIcon, XIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, Loader2, Maximize2, Minimize2, PencilIcon, Sparkles, SquareIcon, XIcon } from 'lucide-react';
 import { Button } from '../ui';
 import { MarkdownText } from './markdown-text';
-import { ToolFallback } from './tool-fallback';
+import { gsap } from "gsap";
 import { TooltipIconButton } from './tooltip-icon-button';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,30 @@ interface ChatDialogProps extends Pick<ComponentProps<"button">, "onClick"> {
     onToggleFullscreen?: () => void;
 }
 
+const AssistantActionBar: FC = () => {
+    return (
+        <ActionBarPrimitive.Root
+            hideWhenRunning
+            autohide="not-last"
+            autohideFloat="single-branch"
+            className="aui-assistant-action-bar-root col-start-3 row-start-2 -ml-1 flex gap-1 text-muted-foreground data-floating:absolute data-floating:rounded-md data-floating:border data-floating:bg-background data-floating:p-1 data-floating:shadow-sm"
+        >
+            <ActionBarPrimitive.Copy asChild>
+                <TooltipIconButton tooltip="Copy">
+                    <AuiIf condition={(s) => s.message.isCopied}>
+                        <CheckIcon />
+                    </AuiIf>
+                    <AuiIf condition={(s) => !s.message.isCopied}>
+                        <CopyIcon />
+                    </AuiIf>
+                </TooltipIconButton>
+            </ActionBarPrimitive.Copy>
+        </ActionBarPrimitive.Root>
+    );
+};
+
+
+
 const Composer: FC = () => {
     return (
         <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
@@ -32,11 +57,10 @@ const Composer: FC = () => {
                     data-slot="composer-shell"
                     className="flex p-4 gap-4"
                 >
-
                     <ComposerPrimitive.Input
-                        className="aui-composer-input max-h-32 min-h-10 rounded-lg w-full resize-none bg-gray-100 p-3 text-sm outline-none placeholder:text-muted-foreground/80"
+                        placeholder="Send a message..."
+                        className="aui-composer-input max-h-32 min-h-10 w-full resize-none bg-gray-100 py-2 px-4 rounded-lg  outline-none placeholder:text-muted-foreground/80"
                         rows={1}
-                        autoFocus
                         aria-label="Message input"
                     />
                     <ComposerAction />
@@ -112,11 +136,11 @@ const UserActionBar: FC = () => {
             autohide="not-last"
             className="aui-user-action-bar-root flex flex-col items-end"
         >
-            <ActionBarPrimitive.Edit asChild>
+            {/* <ActionBarPrimitive.Edit asChild>
                 <TooltipIconButton tooltip="Edit" className="aui-user-action-edit p-4">
                     <PencilIcon />
                 </TooltipIconButton>
-            </ActionBarPrimitive.Edit>
+            </ActionBarPrimitive.Edit> */}
         </ActionBarPrimitive.Root>
     );
 };
@@ -170,19 +194,128 @@ function StatusStep({ text, isLast }: { text: string; isLast: boolean }) {
         </div>
     );
 }
+
+const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
+    className,
+    ...rest
+}) => {
+    return (
+        <BranchPickerPrimitive.Root
+            hideWhenSingleBranch
+            className={cn(
+                "aui-branch-picker-root mr-2 -ml-2 inline-flex items-center text-muted-foreground text-xs",
+                className,
+            )}
+            {...rest}
+        >
+            <BranchPickerPrimitive.Previous asChild>
+                <TooltipIconButton tooltip="Previous">
+                    <ChevronLeftIcon />
+                </TooltipIconButton>
+            </BranchPickerPrimitive.Previous>
+            <span className="aui-branch-picker-state font-medium">
+                <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+            </span>
+            <BranchPickerPrimitive.Next asChild>
+                <TooltipIconButton tooltip="Next">
+                    <ChevronRightIcon />
+                </TooltipIconButton>
+            </BranchPickerPrimitive.Next>
+        </BranchPickerPrimitive.Root>
+    );
+};
+
+
+
+const ThreadWelcome: FC = () => {
+    const iconRef = useRef<HTMLSpanElement>(null);
+    const textRef = useRef<HTMLHeadingElement>(null);
+
+    useEffect(() => {
+        const tl = gsap.timeline();
+
+        tl.fromTo(iconRef.current,
+            { opacity: 0, scale: 0.3, rotate: -60 },
+            { opacity: 1, scale: 1, rotate: 0, duration: 0.8, ease: "back.out(2.5)" }
+        )
+        gsap.to(iconRef.current, {
+            rotate: 360,
+            duration: 8,
+            repeat: -1,
+            ease: "none",
+        });
+
+        gsap.to(iconRef.current, {
+            scale: 1.2,
+            repeat: -1,
+            yoyo: true,
+            duration: 2,
+            ease: "sine.inOut",
+        });
+    }, []);
+
+    return (
+        <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col items-center justify-center gap-2">
+            <div className="flex flex-col items-center text-center gap-2">
+                <span ref={iconRef} className="text-3xl text-foreground text-gray-500">
+                    ✦
+                </span>
+                <h1
+                    ref={textRef}
+                    className="font-medium text-base tracking-tight text-gray-500"
+                >
+                    Ask me anything about the blog
+                </h1>
+            </div>
+        </div>
+    );
+};
+
+const ThreadSuggestions: FC = () => {
+    return (
+        <div className="aui-thread-welcome-suggestions grid w-full @md:grid-cols-2 gap-2 pb-4">
+            <ThreadPrimitive.Suggestions>
+                {() => <ThreadSuggestionItem />}
+            </ThreadPrimitive.Suggestions>
+        </div>
+    );
+};
+
+const ThreadSuggestionItem: FC = () => {
+    return (
+        <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 @md:nth-[n+3]:block nth-[n+3]:hidden animate-in fill-mode-both duration-200">
+            <SuggestionPrimitive.Trigger send asChild>
+                <Button
+                    variant="ghost"
+                    className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-3xl border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+                >
+                    <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 font-medium" />
+                    <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 text-muted-foreground empty:hidden" />
+                </Button>
+            </SuggestionPrimitive.Trigger>
+        </div>
+    );
+};
+
+
 const AssistantMessage: FC = () => {
-    const message = useMessage();
+    const message = useAuiState((s) => s.message)
     const allParts = message.content ?? [];
 
-    const statusParts = allParts.filter(
-        p => p.type === "text" && isStatusPart(p.text)
-    ) as TextMessagePart[];
+    const statusParts = [
+        ...new Map(
+            allParts
+                .filter((p): p is TextMessagePart => p.type === "text" && isStatusPart((p as TextMessagePart).text))
+                .map(p => [p.text, p])
+        ).values()
+    ];
 
     const hasResponse = allParts.some(
         p => p.type === "text" &&
             !isStatusPart(p.text) &&
             p.text.trim().length > 0
     );
+
 
     return (
         <MessagePrimitive.Root
@@ -209,13 +342,16 @@ const AssistantMessage: FC = () => {
                             if (isStatusPart(part.text)) return null;
                             return <MarkdownText />;
                         }
-                        if (part.type === "tool-call")
-                            return part.toolUI ?? <ToolFallback {...part} />;
                         return null;
                     }}
                 </MessagePrimitive.Parts>
 
                 <MessageError />
+            </div>
+
+            <div className="aui-assistant-message-footer mt-1 ml-2 flex">
+                <BranchPicker />
+                <AssistantActionBar />
             </div>
         </MessagePrimitive.Root>
     );
@@ -273,6 +409,11 @@ const ChatDialog = ({ onClick, isFullscreen, onToggleFullscreen }: ChatDialogPro
                 className="min-h-0 flex flex-col flex-1"
             >
                 <ThreadPrimitive.Viewport className="flex flex-col flex-1 overflow-y-auto px-4 py-3 gap-3 min-h-0">
+                    <AuiIf condition={(s) => s.thread.isEmpty}>
+                        <ThreadWelcome />
+                    </AuiIf>
+
+
                     <ThreadPrimitive.Messages>
                         {() => <ThreadMessage />}
                     </ThreadPrimitive.Messages>

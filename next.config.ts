@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   // output: 'standalone',
+  allowedDevOrigins: ["192.168.100.143", "*.ngrok-free.dev"],
   productionBrowserSourceMaps: true,
   // Allow external images
   typescript: {

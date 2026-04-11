@@ -78,6 +78,7 @@ const ChatWidget = () => {
                             transition={{ duration: 0.05 }}
                             className="w-full h-full flex items-center justify-center"
                         >
+
                             <ChatFloatingButton onClick={() => setOpen(true)} isMobile={isMobile} />
                         </motion.div>
                     )}
