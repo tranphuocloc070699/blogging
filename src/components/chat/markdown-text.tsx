@@ -69,7 +69,7 @@ const defaultComponents = memoizeMarkdownComponents({
   h1: ({ className, ...props }) => (
     <h1
       className={cn(
-        "aui-md-h1 mb-2 scroll-m-20 font-semibold text-base first:mt-0 last:mb-0",
+        "aui-md-h1 mb-2 scroll-m-20 font-semibold text-sm first:mt-0 last:mb-0",
         className,
       )}
       {...props}
@@ -123,7 +123,7 @@ const defaultComponents = memoizeMarkdownComponents({
   p: ({ className, ...props }) => (
     <p
       className={cn(
-        "aui-md-p my-2.5 leading-normal first:mt-0 last:mb-0",
+        "aui-md-p my-2.5 leading-normal text-sm first:mt-0 last:mb-0",
         className,
       )}
       {...props}
@@ -135,7 +135,7 @@ const defaultComponents = memoizeMarkdownComponents({
         <Link
           href={href}
           className={cn(
-            "aui-md-a text-primary underline underline-offset-2 hover:text-primary/80",
+            "aui-md-a text-sm text-blue-500 underline underline-offset-2 hover:text-blue-500/80",
             className,
           )}
         >
@@ -147,7 +147,7 @@ const defaultComponents = memoizeMarkdownComponents({
     return (
       <a
         className={cn(
-          "aui-md-a text-primary underline underline-offset-2 hover:text-primary/80",
+          "aui-md-a text-sm text-blue-500 underline underline-offset-2 hover:text-blue-500/80",
           className,
         )}
         {...props}
@@ -158,7 +158,7 @@ const defaultComponents = memoizeMarkdownComponents({
   blockquote: ({ className, ...props }) => (
     <blockquote
       className={cn(
-        "aui-md-blockquote my-2.5 border-muted-foreground/30 border-l-2 pl-3 text-muted-foreground italic",
+        "aui-md-blockquote my-2.5 border-muted-foreground/30 border-l-2 pl-3 text-sm text-muted-foreground italic",
         className,
       )}
       {...props}
@@ -167,7 +167,7 @@ const defaultComponents = memoizeMarkdownComponents({
   ul: ({ className, ...props }) => (
     <ul
       className={cn(
-        "aui-md-ul my-2 ml-4 list-disc marker:text-muted-foreground [&>li]:mt-1",
+        "aui-md-ul my-2 ml-4 list-disc text-sm marker:text-muted-foreground [&>li]:mt-1",
         className,
       )}
       {...props}
@@ -176,7 +176,7 @@ const defaultComponents = memoizeMarkdownComponents({
   ol: ({ className, ...props }) => (
     <ol
       className={cn(
-        "aui-md-ol my-2 ml-4 list-decimal marker:text-muted-foreground [&>li]:mt-1",
+        "aui-md-ol my-2 ml-4 list-decimal text-sm marker:text-muted-foreground [&>li]:mt-1",
         className,
       )}
       {...props}
@@ -200,7 +200,7 @@ const defaultComponents = memoizeMarkdownComponents({
   th: ({ className, ...props }) => (
     <th
       className={cn(
-        "aui-md-th bg-muted px-2 py-1 text-left font-medium first:rounded-tl-lg last:rounded-tr-lg [[align=center]]:text-center [[align=right]]:text-right",
+        "aui-md-th bg-muted px-2 py-1 text-left text-sm font-medium first:rounded-tl-lg last:rounded-tr-lg [[align=center]]:text-center [[align=right]]:text-right",
         className,
       )}
       {...props}
@@ -209,7 +209,7 @@ const defaultComponents = memoizeMarkdownComponents({
   td: ({ className, ...props }) => (
     <td
       className={cn(
-        "aui-md-td border-muted-foreground/20 border-b border-l px-2 py-1 text-left last:border-r [[align=center]]:text-center [[align=right]]:text-right",
+        "aui-md-td border-muted-foreground/20 border-b border-l px-2 py-1 text-left text-sm last:border-r [[align=center]]:text-center [[align=right]]:text-right",
         className,
       )}
       {...props}
@@ -225,7 +225,7 @@ const defaultComponents = memoizeMarkdownComponents({
     />
   ),
   li: ({ className, ...props }) => (
-    <li className={cn("aui-md-li leading-normal", className)} {...props} />
+    <li className={cn("aui-md-li text-sm leading-normal", className)} {...props} />
   ),
   sup: ({ className, ...props }) => (
     <sup

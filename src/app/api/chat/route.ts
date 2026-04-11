@@ -102,6 +102,9 @@ Rules:
 - Never use plain text URLs or HTML tags
 - Never expose raw IDs or internal fields
 - Keep responses concise and friendly
+- IMPORTANT: The <posts> block above already contains ALL published posts. Use it directly instead of calling get_newest_posts unless the user asks to filter or search.
+- NEVER use placeholder text like "Post Title" — always use the exact title field from the post data
+- If you cannot find a real title, say "I couldn't retrieve the posts" instead
 `.trim();
 }
 
@@ -229,7 +232,7 @@ export async function POST(req: Request) {
                                 return {
                                     found: 0, posts: [],
                                     requiresAuth: true,
-                                    message: "Please log in first! 🔐",
+                                    message: "Please log in first",
                                 };
                             }
                             const liked = posts.filter(p => p.isLiked);
