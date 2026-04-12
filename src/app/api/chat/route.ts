@@ -59,6 +59,7 @@ const getCachedPosts = unstable_cache(
 type RawPost = Awaited<ReturnType<typeof getCachedPosts>>[number];
 
 function shapePosts(rawPosts: RawPost[], likedPostIds: Set<number>) {
+    console.log({ rawPosts })
     return rawPosts.map(post => ({
         id: post.id,
         title: post.title,
@@ -249,7 +250,7 @@ export async function POST(req: Request) {
                     get_newest_posts: {
                         description: "Get the N most recently published posts.",
                         inputSchema: z.object({
-                            count: z.number().min(1).max(12).describe(
+                            count: z.number().min(1).max(12).default(3).optional().describe(
                                 "How many posts to return. Default to 3 if not specified."
                             ),
                         }),
@@ -287,7 +288,7 @@ export async function POST(req: Request) {
                             };
                         },
                     },
-                    ...frontendTools ?? {},
+                    ...frontendToolDefs ?? {},
                 },
                 onChunk: ({ chunk }) => {
                     if (chunk.type === "text-delta") process.stdout.write(chunk.text);
