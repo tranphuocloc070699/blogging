@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres:latest
+    image: pgvector/pgvector:pg17
     container_name: postgres-blog
     env_file:
       - .env

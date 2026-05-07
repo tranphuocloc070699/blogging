@@ -13,6 +13,7 @@
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^4.0.92",
     "@ai-sdk/anthropic": "^3.0.68",
+    "@ai-sdk/deepseek": "^2.0.32",
     "@ai-sdk/google": "^3.0.61",
     "@ai-sdk/groq": "^3.0.35",
     "@ai-sdk/openai": "^3.0.52",
@@ -66,6 +67,7 @@
     "nextjs-toploader": "^3.8.16",
     "nodemailer": "^7.0.13",
     "novel": "^1.0.2",
+    "ollama-ai-provider-v2": "^3.5.0",
     "prisma": "6.17.1",
     "radix-ui": "^1.4.3",
     "react": "19.1.0",

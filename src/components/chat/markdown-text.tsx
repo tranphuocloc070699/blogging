@@ -150,11 +150,16 @@ const defaultComponents = memoizeMarkdownComponents({
           "aui-md-a text-sm text-blue-500 underline underline-offset-2 hover:text-blue-500/80",
           className,
         )}
+        href={href}
+        target="_blank"
         {...props}
-      />
+      >
+        {children}
+      </a>
     )
 
   },
+
   blockquote: ({ className, ...props }) => (
     <blockquote
       className={cn(
@@ -236,7 +241,7 @@ const defaultComponents = memoizeMarkdownComponents({
   pre: ({ className, ...props }) => (
     <pre
       className={cn(
-        "aui-md-pre overflow-x-auto rounded-t-none rounded-b-lg border border-border/50 border-t-0 bg-muted/30 p-3 text-xs leading-relaxed",
+        "aui-md-pre overflow-x-auto rounded-t-none rounded-b-lg border border-border/50 border-t-0 bg-muted/30 p-3 text-sm leading-relaxed",
         className,
       )}
       {...props}

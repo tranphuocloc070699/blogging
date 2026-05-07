@@ -162,7 +162,7 @@ export default function LoginForm() {
             value={magicLinkEmail}
             onChange={(e) => setMagicLinkEmail(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleMagicLink()}
-            className="w-full h-10 px-3 text-sm bg-stone-50 border border-stone-300 focus:border-stone-500 focus:outline-none rounded-md"
+            className="w-full h-10 px-3 text-base bg-stone-50 border border-stone-300 focus:border-stone-500 focus:outline-none rounded-md"
             autoFocus
           />
           <Button
@@ -205,7 +205,7 @@ export default function LoginForm() {
           <Input
             type="email"
             placeholder="Email Address"
-            className="h-10 text-sm bg-stone-50 border-stone-300 focus:border-stone-500 focus:ring-stone-500 rounded-md"
+            className="h-10 bg-stone-50 border-stone-300 focus:border-stone-500 focus:ring-stone-500 rounded-md"
             error={errors.email?.message}
             {...register("email")}
           />
@@ -216,7 +216,7 @@ export default function LoginForm() {
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
-              className="h-10 text-sm bg-stone-50 border-stone-300 focus:border-stone-500 focus:ring-stone-500 rounded-md pr-10"
+              className="h-10 bg-stone-50 border-stone-300 focus:border-stone-500 focus:ring-stone-500 rounded-md pr-10"
               error={errors.password?.message}
               {...register("password")}
             />
