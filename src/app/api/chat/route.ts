@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { postRepository } from "@/repositories/post.repository";
-import { groq } from "@ai-sdk/groq";
-import { frontendTools } from "@assistant-ui/react-ai-sdk";
+import { deepseek } from "@ai-sdk/deepseek"
+
 import { unstable_cache } from "next/cache";
 import {
     streamText,
@@ -37,12 +37,11 @@ function isBlogRelated(messages: UIMessage[]): boolean {
         .filter((p): p is { type: "text"; text: string } => p.type === "text")
         .map(p => p.text)
         .join(" ");
-    return /post|article|blog|read|topic|tag|categor|latest|newest|recent|find|search|show|list|about/i.test(text);
+    return /post|article|blog|read|topic|tag|categor|latest|newest|recent|find|search|show|list|about|summar|explain|describ|tell|what|how|why|author|who|contact|skill|job|experience/i.test(text);
 }
 
 const getCachedPosts = unstable_cache(
     async () => {
-        console.log("🔵 Cache MISS — hitting database");
         return prisma.post.findMany({
             where: { status: "PUBLISHED" },
             orderBy: { publishedAt: "desc" },
@@ -66,7 +65,7 @@ function shapePosts(rawPosts: RawPost[], likedPostIds: Set<number>) {
         excerpt: post.excerpt,
         slug: post.slug,
         thumbnail: post.thumbnail,
-        publishedAt: post.publishedAt?.toISOString() ?? null,
+        publishedAt: post.publishedAt ? new Date(post.publishedAt).toISOString() : null,
         keywords: post.keywords,
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
@@ -78,40 +77,44 @@ function shapePosts(rawPosts: RawPost[], likedPostIds: Set<number>) {
         })),
     }));
 }
+type ShapedPost = ReturnType<typeof shapePosts>[number];
 
-function buildSystemPrompt(posts: ReturnType<typeof shapePosts>, userId?: string) {
+
+function buildSystemPrompt(posts: ShapedPost[], userId?: string) {
+    const index = posts
+        .map(p => `- ${p.title} | slug: "${p.slug}"`)
+        .join("\n");
+
     return `
 You are a helpful assistant for a personal blog.
-You can ONLY answer questions about the blog posts listed below.
-If the user asks anything unrelated to these posts, politely decline.
+
+Formatting rules:
+- Use minimal icons — only when truly necessary (e.g. ✉️ for email, 🔗 for links)
+- Never use decorative icons like 🚀 📰 🎥 🏢 — keep responses professional and clean
+- Always render contact links as clickable markdown: [Label](url)
+- Never display raw URLs as plain text — always wrap them in markdown links
+- Keep responses concise and structured
+
+Rules:
+- To find relevant posts for a query → call search_posts
+- To get full post content → call get_post_content
+- To answer questions about the author → call get_author_info
+- Always format post links as markdown: [Post Title](/posts/slug)
+- Never expose raw IDs or internal fields
+- Never make up content or author info — always fetch it first
 
 ${userId
             ? `The current user is logged in (userId: ${userId}).`
-            : `The current user is NOT logged in.
-           If they ask about liked, saved, or personal posts, respond:
-           "Please log in first so I can personalize your experience!"`
+            : `The current user is NOT logged in. If they ask about liked or saved posts, say: "Please log in first!"`
         }
 
-Here are all published blog posts:
-<posts>
-${JSON.stringify(posts, null, 2)}
-</posts>
-
-Rules:
-- Only use information from the posts above
-- Always format post links as markdown: [Post Title](/posts/slug)
-- Never use plain text URLs or HTML tags
-- Never expose raw IDs or internal fields
-- Keep responses concise and friendly
-- IMPORTANT: The <posts> block above already contains ALL published posts. Use it directly instead of calling get_newest_posts unless the user asks to filter or search.
-- NEVER use placeholder text like "Post Title" — always use the exact title field from the post data
-- If you cannot find a real title, say "I couldn't retrieve the posts" instead
+Available posts:
+${index}
 `.trim();
 }
-
 export async function POST(req: Request) {
     const { messages, tools: frontendToolDefs }: ChatRequest = await req.json();
-    const model: LanguageModel = groq("llama-3.1-8b-instant");
+    const model: LanguageModel = deepseek("deepseek-v4-flash");
 
     // Each status message needs a unique stable ID
     const STATUS_ID = "status-" + crypto.randomUUID();
@@ -192,6 +195,38 @@ export async function POST(req: Request) {
                 messages: await convertToModelMessages(messages),
                 system: buildSystemPrompt(posts, userId),
                 tools: {
+                    get_author_info: {
+                        description: "Get information about the blog author — who they are, their job, skills, experience, and contact details. Call this when the user asks about the author, developer, or owner of this blog.",
+                        inputSchema: z.object({}),
+                        execute: async () => {
+                            await writeStep("Loading author info...");
+                            const { readFileSync } = await import("fs");
+                            const { join } = await import("path");
+                            const content = readFileSync(join(process.cwd(), "public/content/author.md"), "utf-8");
+                            return { author: content };
+                        },
+                    },
+                    get_post_content: {
+                        description: "Fetch the full content of a post by slug. Call this when the user asks what a post covers, wants a summary, or asks for details.",
+                        inputSchema: z.object({
+                            slug: z.string().describe("The post slug"),
+                        }),
+                        execute: async ({ slug }) => {
+                            await writeStep(`Reading "${slug}"...`);
+                            const post = await prisma.post.findUnique({
+                                where: { slug },
+                                select: { title: true, content: true, excerpt: true },
+                            });
+                            if (!post) return { error: `Post "${slug}" not found.` };
+
+                            const { extractTextFromTiptap } = await import("@/lib/post-embedding");
+                            return {
+                                title: post.title,
+                                excerpt: post.excerpt,
+                                content: extractTextFromTiptap(post.content).slice(0, 6000),
+                            };
+                        },
+                    },
                     search_posts: {
                         description: "Search blog posts by keyword, topic, or term name.",
                         inputSchema: z.object({
@@ -201,18 +236,25 @@ export async function POST(req: Request) {
                         }),
                         execute: async ({ query }) => {
                             await writeStep(`Searching "${query}"...`);
-                            const q = query.toLowerCase();
-                            const matched = posts.filter(p =>
-                                p.title.toLowerCase().includes(q) ||
-                                (p.excerpt?.toLowerCase().includes(q) ?? false) ||
-                                (p.keywords?.toLowerCase().includes(q) ?? false) ||
-                                p.terms.some(t => t.name.toLowerCase().includes(q))
-                            );
+
+                            const { generateEmbedding } = await import("@/lib/post-embedding");
+                            const queryEmbedding = await generateEmbedding(query);
+                            const results = await postRepository.searchPostsBySimilarity({
+                                queryEmbedding,
+                                limit: 5,
+                            });
+
                             await writeStep(
-                                matched.length > 0
-                                    ? `Found ${matched.length} post${matched.length > 1 ? "s" : ""}`
-                                    : `No posts found about "${query}"`
+                                results.length > 0
+                                    ? `Found ${results.length} relevant post${results.length > 1 ? "s" : ""}`
+                                    : `No relevant posts found for "${query}"`
                             );
+
+                            // Enrich with full shaped post data
+                            const matched = results
+                                .map(r => posts.find(p => p.id === r.id))
+                                .filter(Boolean);
+
                             return {
                                 found: matched.length,
                                 posts: matched,

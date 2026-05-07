@@ -1,3 +1,4 @@
+import { buildPostText, generateEmbedding } from "@/lib/post-embedding";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -19,6 +20,11 @@ export interface PublishedPostListInput {
   sortDir: "asc" | "desc";
   search?: string | null;
   tag?: string | null;
+}
+
+export interface ISearchPostBySimilarity {
+  queryEmbedding: number[];
+  limit: number;
 }
 
 const postInclude = {
@@ -48,6 +54,53 @@ const postInclude = {
 } satisfies Prisma.PostInclude;
 
 export const postRepository = {
+  async upsertPostEmbedding(postId: number) {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        title: true,
+        excerpt: true,
+        content: true,
+        keywords: true,
+        postTerms: { include: { term: true } },
+      },
+    });
+    if (!post) return;
+
+    const text = buildPostText({
+      title: post.title,
+      excerpt: post.excerpt,
+      content: post.content,
+      keywords: post.keywords,
+      terms: post.postTerms.map(pt => pt.term.name),
+    });
+
+    const embedding = await generateEmbedding(text);
+
+    await prisma.$executeRaw`
+        UPDATE "posts"
+        SET embedding = ${`[${embedding.join(",")}]`}::vector
+        WHERE id = ${postId}
+    `;
+  },
+
+  async searchPostsBySimilarity({ queryEmbedding, limit }: ISearchPostBySimilarity) {
+    // <=> caculate cosine distance between these two vectors
+
+    const vectorLiteral = `[${queryEmbedding.join(", ")}]`
+    const result = await prisma.$queryRaw<{ id: number; slug: string; title: string; similarity: number }[]>`
+      SELECT id, slug, title,
+      1 - (embedding <=> ${vectorLiteral}::vector) AS similarity
+      FROM "posts"
+      WHERE status = 'PUBLISHED'
+      AND embedding IS NOT NULL
+      AND (embedding <=> ${vectorLiteral}::vector) <= 0.7
+      ORDER BY embedding <=> ${vectorLiteral}::vector
+      LIMIT ${limit}
+      `
+    return result
+  },
+
   async findAdminPosts(input: AdminPostListInput) {
     const where: Prisma.PostWhereInput = {};
     if (input.status) {
@@ -115,10 +168,10 @@ export const postRepository = {
         keywords: data.keywords,
         ...(data.termIds && data.termIds.length > 0
           ? {
-              postTerms: {
-                create: data.termIds.map((termId) => ({ termId })),
-              },
-            }
+            postTerms: {
+              create: data.termIds.map((termId) => ({ termId })),
+            },
+          }
           : {}),
       },
       include: postInclude,
@@ -177,22 +230,22 @@ export const postRepository = {
           ...(data.keywords !== undefined ? { keywords: data.keywords } : {}),
           ...(data.status !== undefined
             ? {
-                status: data.status,
-                ...(data.publishedAt !== undefined
-                  ? { publishedAt: data.publishedAt }
-                  : data.status === "PUBLISHED" && existing.status !== "PUBLISHED"
-                    ? { publishedAt: new Date() }
-                    : {}),
-              }
+              status: data.status,
+              ...(data.publishedAt !== undefined
+                ? { publishedAt: data.publishedAt }
+                : data.status === "PUBLISHED" && existing.status !== "PUBLISHED"
+                  ? { publishedAt: new Date() }
+                  : {}),
+            }
             : data.publishedAt !== undefined
               ? { publishedAt: data.publishedAt }
               : {}),
           ...(data.termIds !== undefined && data.termIds.length > 0
             ? {
-                postTerms: {
-                  create: data.termIds.map((termId) => ({ termId })),
-                },
-              }
+              postTerms: {
+                create: data.termIds.map((termId) => ({ termId })),
+              },
+            }
             : {}),
         },
         include: postInclude,
@@ -359,3 +412,5 @@ export const postRepository = {
     return Boolean(like);
   },
 };
+
+

@@ -12,7 +12,7 @@ import {
     ThreadPrimitive,
     useAuiState,
 } from "@assistant-ui/react";
-import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, Loader2, Maximize2, Minimize2, PencilIcon, Sparkles, SquareIcon, XIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, Loader2, Maximize2, Minimize2, Sparkles, SquareIcon, XIcon } from 'lucide-react';
 import { Button } from '../ui';
 import { MarkdownText } from './markdown-text';
 import { gsap } from "gsap";
@@ -47,8 +47,6 @@ const AssistantActionBar: FC = () => {
     );
 };
 
-
-
 const Composer: FC = () => {
     return (
         <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
@@ -58,8 +56,8 @@ const Composer: FC = () => {
                     className="flex p-4 gap-4"
                 >
                     <ComposerPrimitive.Input
-                        placeholder="Send a message..."
-                        className="aui-composer-input max-h-32 min-h-10 w-full resize-none bg-gray-100 py-2 px-4 rounded-lg  outline-none placeholder:text-muted-foreground/80"
+                        placeholder="Ask me anything..."
+                        className="aui-composer-input max-h-32 min-h-10 w-full resize-none bg-gray-100 py-2 px-4 rounded-lg outline-none placeholder:text-muted-foreground/80"
                         rows={1}
                         aria-label="Message input"
                     />
@@ -136,11 +134,6 @@ const UserActionBar: FC = () => {
             autohide="not-last"
             className="aui-user-action-bar-root flex flex-col items-end"
         >
-            {/* <ActionBarPrimitive.Edit asChild>
-                <TooltipIconButton tooltip="Edit" className="aui-user-action-edit p-4">
-                    <PencilIcon />
-                </TooltipIconButton>
-            </ActionBarPrimitive.Edit> */}
         </ActionBarPrimitive.Root>
     );
 };
@@ -163,7 +156,6 @@ const UserMessage: FC = () => {
     );
 };
 
-
 const ThreadMessage: FC = () => {
     const role = useAuiState((s) => s.message.role);
     if (role === "user") return <UserMessage />;
@@ -182,9 +174,7 @@ function StatusStep({ text, isLast }: { text: string; isLast: boolean }) {
     return (
         <div className={cn(
             "flex items-center gap-2 text-xs py-0.5 transition-all duration-300",
-            isLast
-                ? "text-foreground"
-                : "text-muted-foreground/40"
+            isLast ? "text-foreground" : "text-muted-foreground/40"
         )}>
             {isLast
                 ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
@@ -195,10 +185,7 @@ function StatusStep({ text, isLast }: { text: string; isLast: boolean }) {
     );
 }
 
-const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
-    className,
-    ...rest
-}) => {
+const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({ className, ...rest }) => {
     return (
         <BranchPickerPrimitive.Root
             hideWhenSingleBranch
@@ -225,26 +212,46 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
     );
 };
 
+const ThreadSuggestionItem: FC = () => {
+    return (
+        <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200">
+            <SuggestionPrimitive.Trigger send asChild>
+                <Button
+                    variant="ghost"
+                    className="aui-thread-welcome-suggestion h-auto w-full flex-col items-start justify-start gap-1 rounded-2xl border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+                >
+                    <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 font-medium" />
+                    <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 text-xs text-muted-foreground empty:hidden" />
+                </Button>
+            </SuggestionPrimitive.Trigger>
+        </div>
+    );
+};
 
+const ThreadSuggestions: FC = () => {
+    return (
+        <div className="aui-thread-welcome-suggestions grid w-full grid-cols-2 gap-2 pb-4">
+            <ThreadPrimitive.Suggestions>
+                {() => <ThreadSuggestionItem />}
+            </ThreadPrimitive.Suggestions>
+        </div>
+    );
+};
 
 const ThreadWelcome: FC = () => {
     const iconRef = useRef<HTMLSpanElement>(null);
-    const textRef = useRef<HTMLHeadingElement>(null);
 
     useEffect(() => {
-        const tl = gsap.timeline();
-
-        tl.fromTo(iconRef.current,
+        gsap.fromTo(iconRef.current,
             { opacity: 0, scale: 0.3, rotate: -60 },
             { opacity: 1, scale: 1, rotate: 0, duration: 0.8, ease: "back.out(2.5)" }
-        )
+        );
         gsap.to(iconRef.current, {
             rotate: 360,
             duration: 8,
             repeat: -1,
             ease: "none",
         });
-
         gsap.to(iconRef.current, {
             scale: 1.2,
             repeat: -1,
@@ -255,51 +262,22 @@ const ThreadWelcome: FC = () => {
     }, []);
 
     return (
-        <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col items-center justify-center gap-2">
+        <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center text-center gap-2">
-                <span ref={iconRef} className="text-3xl text-foreground text-gray-500">
+                <span ref={iconRef} className="text-3xl text-gray-500">
                     ✦
                 </span>
-                <h1
-                    ref={textRef}
-                    className="font-medium text-base tracking-tight text-gray-500"
-                >
-                    Ask me anything about the blog
+                <h1 className="font-medium text-base tracking-tight text-gray-500">
+                    Ask me anything about the blog or the author
                 </h1>
             </div>
+            <ThreadSuggestions />
         </div>
     );
 };
-
-const ThreadSuggestions: FC = () => {
-    return (
-        <div className="aui-thread-welcome-suggestions grid w-full @md:grid-cols-2 gap-2 pb-4">
-            <ThreadPrimitive.Suggestions>
-                {() => <ThreadSuggestionItem />}
-            </ThreadPrimitive.Suggestions>
-        </div>
-    );
-};
-
-const ThreadSuggestionItem: FC = () => {
-    return (
-        <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 @md:nth-[n+3]:block nth-[n+3]:hidden animate-in fill-mode-both duration-200">
-            <SuggestionPrimitive.Trigger send asChild>
-                <Button
-                    variant="ghost"
-                    className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-3xl border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
-                >
-                    <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 font-medium" />
-                    <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 text-muted-foreground empty:hidden" />
-                </Button>
-            </SuggestionPrimitive.Trigger>
-        </div>
-    );
-};
-
 
 const AssistantMessage: FC = () => {
-    const message = useAuiState((s) => s.message)
+    const message = useAuiState((s) => s.message);
     const allParts = message.content ?? [];
 
     const statusParts = [
@@ -316,14 +294,12 @@ const AssistantMessage: FC = () => {
             p.text.trim().length > 0
     );
 
-
     return (
         <MessagePrimitive.Root
             className="aui-assistant-message-root fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-3 duration-150"
             data-role="assistant"
         >
             <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground leading-relaxed">
-
                 {statusParts.length > 0 && (
                     <div className="mb-3 flex flex-col gap-1 border-l-2 border-border/30 pl-3">
                         {statusParts.map((part, i) => (
@@ -356,6 +332,7 @@ const AssistantMessage: FC = () => {
         </MessagePrimitive.Root>
     );
 };
+
 const ChatDialog = ({ onClick, isFullscreen, onToggleFullscreen }: ChatDialogProps) => {
     return (
         <div
@@ -363,7 +340,9 @@ const ChatDialog = ({ onClick, isFullscreen, onToggleFullscreen }: ChatDialogPro
             className="w-full h-full border bg-background flex flex-col overflow-hidden"
         >
             <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-                <span className="font-semibold text-base flex gap-2 items-center"><Sparkles size={24} /> AI Assistant</span>
+                <span className="font-semibold text-base flex gap-2 items-center">
+                    <Sparkles size={24} /> AI Assistant
+                </span>
                 <div className="flex items-center gap-1">
                     <motion.div
                         whileHover={{ scale: 1.1 }}
@@ -405,14 +384,12 @@ const ChatDialog = ({ onClick, isFullscreen, onToggleFullscreen }: ChatDialogPro
                     </motion.div>
                 </div>
             </div>
-            <ThreadPrimitive.Root
-                className="min-h-0 flex flex-col flex-1"
-            >
+
+            <ThreadPrimitive.Root className="min-h-0 flex flex-col flex-1">
                 <ThreadPrimitive.Viewport className="flex flex-col flex-1 overflow-y-auto px-4 py-3 gap-3 min-h-0">
                     <AuiIf condition={(s) => s.thread.isEmpty}>
                         <ThreadWelcome />
                     </AuiIf>
-
 
                     <ThreadPrimitive.Messages>
                         {() => <ThreadMessage />}
@@ -425,7 +402,7 @@ const ChatDialog = ({ onClick, isFullscreen, onToggleFullscreen }: ChatDialogPro
                 </ThreadPrimitive.ViewportFooter>
             </ThreadPrimitive.Root>
         </div>
-    )
-}
+    );
+};
 
-export default ChatDialog
+export default ChatDialog;

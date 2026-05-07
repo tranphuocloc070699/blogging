@@ -56,7 +56,6 @@ export function generateAccessToken(user: UserForToken): string {
     type: TOKEN_TYPE.ACCESS, // Temporary fix inconsistence between next auth and authenticate manully
   };
 
-  console.log({ JWT_SECRET });
 
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: REFRESH_TOKEN_EXPIRE,
