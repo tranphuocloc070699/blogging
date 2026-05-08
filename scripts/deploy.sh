@@ -22,6 +22,8 @@ sudo docker compose -f docker-compose.prod.yml up -d --force-recreate
 echo "Checking service status..."
 sudo docker compose -f docker-compose.prod.yml ps
 
+  
+
 echo "Pruning old Docker images..."
 sudo docker image prune -f
 
