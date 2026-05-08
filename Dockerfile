@@ -9,13 +9,13 @@ WORKDIR /app
 COPY package.json ./
 COPY prisma ./prisma
 
-RUN pnpm install
+RUN npm install
 
 COPY . .
 
-RUN pnpm prisma generate
+RUN npm prisma generate
 
-RUN pnpm run build
+RUN npm run build
 
 EXPOSE 3000
 ENV NODE_ENV=production
